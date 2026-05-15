@@ -31,42 +31,52 @@ class Bot:
             CommandPoll('poll', run=poll),
             CommandRemind('remind', run=remind),
             CommandInfo('info', run=info),
-            Command('start', run=start),
-            Command('help', run=help_command),
-            Command('status', run=status),
-            Command('about', run=about),
         ]
 
 async def start(update: Update, context: Application):
     await update.message.reply_text("Привет, я бот!")
 
 async def help_command(update: Update, context: Application):
-    await update.message.reply_text("Список команд: /start, /help, /status, /about, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info")
+    await update.message.reply_text('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info')
 
 async def about(update: Update, context: Application):
-    await update.message.reply_text("Это случайное сообщение")
+    await update.message.reply_text('Это бот, который может ответить на различные вопросы.')
 
 async def status(update: Update, context: Application):
-    await update.message.reply_text("Статус: онлайн")
+    await update.message.reply_text('Бот работает!')
 
 async def joke(update: Update, context: Application):
-    await update.message.reply_text("Это случайная шутка")
+    jokes = [
+        'Почему компьютер шел в гимнастку? Чтобы улучшить свою скорость!',
+        'Почему программист не любит воду? Потому что он боится "отплывать"!',
+        'Почему компьютер не может ходить в кино? Потому что он не может купить билет!'
+    ]
+    await update.message.reply_text(random.choice(jokes))
 
 async def fact(update: Update, context: Application):
-    await update.message.reply_text("Это случайный факт")
+    facts = [
+        'Солнце весит 330 000 масс-сон, что примерно в 330 000 раз больше, чем Земля.',
+        'Самая большая планета в наше солнечной системы - Юпитер.',
+        'Самая дальняя планета от Солнца - Плутон.'
+    ]
+    await update.message.reply_text(random.choice(facts))
 
 async def quote(update: Update, context: Application):
-    await update.message.reply_text("Это случайная цитата")
+    quotes = [
+        'Всегда помните, что жизнь коротка, но воспоминания о ней могут быть вечными.',
+        'Никогда не сдавайтесь, потому что победа всегда впереди.',
+        'Всегда следуйте своему сердцу, потому что оно знает, что правильно.'
+    ]
+    await update.message.reply_text(random.choice(quotes))
 
 async def weather(update: Update, context: Application):
-    api_key = 'Ваш ключ от API'
-    city = update.message.text.split()[1]
+    city = update.message.text.split(' ')[1]
+    api_key = 'Ваш API ключ'
     url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric'
     response = requests.get(url)
     if response.status_code == 200:
-        weather_data = response.json()
-        await update.message.reply_text(f'Температура в {city}: {weather_data["main"]["temp"]}°C\n'
-                                        f'Влажность: {weather_data["main"]["humidity"]} %')
+        data = response.json()
+        await update.message.reply_text(f'Температура в {city}: {data["main"]["temp"]}°C')
     else:
         await update.message.reply_text('Ошибка. Проверьте город или ключ от API.')
 
@@ -87,10 +97,9 @@ if __name__ == "__main__":
     from logging import basicConfig
     basicConfig(level=logging.INFO)
     import sys
-    from aiogram import Bot, types
+    from aiogram import Bot, Dispatcher, executor, types
     bot = Bot(BOT_TOKEN)
-    updater = Application()
-    memory_storage = MemoryStorage()
-    updater.setup_middleware(aiogram.BackendMiddleware())
-    updater.set_update_handler(aiogram.Dispatcher(storage=memory_storage))
-    updater.run()
+    dp = Dispatcher(bot, storage=MemoryStorage())
+    dp.setup_middleware(aiogram.BackendMiddleware())
+    dp.include_router(aiogram.Dispatcher(dp, storage=MemoryStorage()))
+    executor.start_polling(dp, skip_updates=True)
