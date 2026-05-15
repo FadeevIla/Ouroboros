@@ -1,11 +1,14 @@
 import secrets
 import asyncio
+import random
+import logging
+import requests
+
+import aiogram
 from aiogram import Application, Bot
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import Update, Message, Poll
-from aiogram.filters import Command, CommandStart, CommandHelp, CommandAbout, CommandStatus, CommandJoke, CommandFact, CommandQuote, CommandWeather, CommandStats, CommandPoll, CommandRemind, CommandStats
-from aiogram.utils.command import CommandSet
-from aiogram.utils.command import Command
+from aiogram.filters import Command, CommandStart, CommandHelp, CommandAbout, CommandStatus, CommandJoke, CommandFact, CommandQuote, CommandWeather, CommandStats, CommandPoll, CommandRemind, CommandInfo
 
 logger = logging.getLogger(__name__)
 BOT_TOKEN = secrets.environ_map['TELEGRAM_BOT_TOKEN']
@@ -15,7 +18,7 @@ class Bot:
         self.app = Application()
         self.storage = MemoryStorage()
         self.bot = Bot(token=BOT_TOKEN)
-        self.command_set = CommandSet([
+        self.command_set = [
             CommandStart('start', run=start),
             CommandHelp('help', run=help_command),
             CommandAbout('about', run=about),
@@ -27,86 +30,67 @@ class Bot:
             CommandStats('stats', run=stats),
             CommandPoll('poll', run=poll),
             CommandRemind('remind', run=remind),
+            CommandInfo('info', run=info),
             Command('start', run=start),
             Command('help', run=help_command),
             Command('status', run=status),
             Command('about', run=about),
-            Command('joke', run=joke),
-            Command('fact', run=fact),
-            Command('quote', run=quote),
-            Command('weather', run=weather),
-            Command('stats', run=stats),
-            Command('poll', run=poll),
-            Command('remind', run=remind),
-        ])
+        ]
 
-        self.app.command_handlers.update(self.command_set.commands)
-        self.app.answerers.update(self.command_set.answerers)
-
-    async def main(self):
-        if BOT_TOKEN == "твой_токен_бота":
-            logger.error("❌ TELEGRAM_BOT_TOKEN не установлен!")
-            logger.error("   Добавь токен в secrets GitHub: Settings → Secrets → TELEGRAM_BOT_TOKEN")
-            sys.exit(1)
-
-        logger.info("🔧 Создание приложения...")
-        await self.app.start()
-
-        logger.info("✅ Бот готов к запуску!")
-        logger.info("📋 Команды: /start, /help, /status, /about, /joke, /fact, /quote, /weather, /stats, /poll, /remind")
-
-        # Запускаем поллинг
-        try:
-            async with self.app:
-                await self.app.run_polling()
-        except Exception as e:
-            logger.error(f"Ошибка запуска бота: {e}")
-
-async def start(update: Update):
-    await update.message.reply_sticker("CAADAgAD1AoAApg0OgAe8w3xW4j7iA") # стикерпак с сообщением
+async def start(update: Update, context: Application):
+    await update.message.reply_text("Привет, я бот!")
 
 async def help_command(update: Update, context: Application):
-    await update.message.reply_text("Список доступных команд:\n"
-                                    "/start - начать работу\n"
-                                    "/help - помощь\n"
-                                    "/status - описание команд\n"
-                                    "/about - информация о пользователе\n"
-                                    "/joke - случайный шутка\n"
-                                    "/fact - рандомная информация\n"
-                                    "/quote - цитата дня\n"
-                                    "/weather - прогноз погоды\n"
-                                    "/stats - статистика\n"
-                                    "/poll - опрос\n"
-                                    "/remind - напомнить")
+    await update.message.reply_text("Список команд: /start, /help, /status, /about, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info")
 
 async def about(update: Update, context: Application):
-    await update.message.reply_text(f"Возраст: {update.from_user.age}\n"
-                                   f"ID: {update.from_user.id}")
+    await update.message.reply_text("Это случайное сообщение")
 
 async def status(update: Update, context: Application):
-    await update.message.reply_text("Текущая информация пользователя")
+    await update.message.reply_text("Статус: онлайн")
 
 async def joke(update: Update, context: Application):
-    await update.message.reply_text("Шутка. Приглашение к танцам в 2:00 ночи в пятницу")
+    await update.message.reply_text("Это случайная шутка")
 
 async def fact(update: Update, context: Application):
-    await update.message.reply_text("Факт о человеке. В 1955 году человек впервые ступил на луну")
+    await update.message.reply_text("Это случайный факт")
 
 async def quote(update: Update, context: Application):
-    await update.message.reply_text("Цитата дня. «Деньги, так деньги, а деньги не для того, чтобы их положить под подушку».")
+    await update.message.reply_text("Это случайная цитата")
 
 async def weather(update: Update, context: Application):
-    await update.message.reply_text("Прогноз погоды. В городе сейчас дождь")
-
-async def polling(update: Update, context: Application):
-    await update.message.reply_text("Опрос: какие цветы вы любите?")
+    api_key = 'Ваш ключ от API'
+    city = update.message.text.split()[1]
+    url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric'
+    response = requests.get(url)
+    if response.status_code == 200:
+        weather_data = response.json()
+        await update.message.reply_text(f'Температура в {city}: {weather_data["main"]["temp"]}°C\n'
+                                        f'Влажность: {weather_data["main"]["humidity"]} %')
+    else:
+        await update.message.reply_text('Ошибка. Проверьте город или ключ от API.')
 
 async def stats(update: Update, context: Application):
-    await update.message.reply_text("Статистика. Пользователь находится в статистике")
+    await update.message.reply_text("Статистика: пользователей - 100")
+
+async def poll(update: Update, context: Application):
+    await update.message.reply_text("Опрос: как вы относитесь к боту?")
 
 async def remind(update: Update, context: Application):
     await update.message.reply_text("Напоминание. Встреча на выходных.")
 
+async def info(update: Update, context: Application):
+    await update.message.reply_text("Это случайное сообщение")
+
 if __name__ == "__main__":
-    bot = Bot()
-    asyncio.run(bot.main())
+    import logging
+    from logging import basicConfig
+    basicConfig(level=logging.INFO)
+    import sys
+    from aiogram import Bot, types
+    bot = Bot(BOT_TOKEN)
+    updater = Application()
+    memory_storage = MemoryStorage()
+    updater.setup_middleware(aiogram.BackendMiddleware())
+    updater.set_update_handler(aiogram.Dispatcher(storage=memory_storage))
+    updater.run()
