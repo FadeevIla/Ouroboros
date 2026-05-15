@@ -68,7 +68,7 @@ class Validator:
             if not syntax_ok:
                 self.logger.warning(f"[{attempt + 1}] {syntax_err}")
                 if attempt < max_retries - 1:
-                    time.sleep(10)  # было 5 секунд
+                    time.sleep(15)  # больше паузы между попытками
                     code = self._llm_fix(code, syntax_err, "syntax")
                     continue
                 return False, code, syntax_err

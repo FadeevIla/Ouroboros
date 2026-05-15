@@ -13,25 +13,16 @@ class LLMInterface:
     def analyze_bugs(self, code):
         self.logger.info("LLM: поиск багов")
         system_prompt = (
-            "Ты — senior Python-разработчик. Исправь баги в коде телеграм-бота: "
-            "потерянные await, необработанные исключения, ошибки в API Telegram, "
-            "проблемы с типами. НЕ трогай импорты из core.*. "
-            "Верни ПОЛНЫЙ исправленный код. Без объяснений, без markdown."
+            "Ты — Python-разработчик. Исправь ВСЕ баги в коде телеграм-бота. "
+            "Верни ПОЛНЫЙ код. Без markdown."
         )
         return self._call(code, system_prompt, temperature=0.2)
 
     def generate_feature(self, code):
         self.logger.info("LLM: генерация фичи")
         system_prompt = (
-            "Ты — разработчик телеграм-ботов. Добавь одну новую команду. "
-            "НЕ ломай существующие команды. НЕ добавляй os.system, subprocess, eval, exec. "
-            "НЕ трогай импорты core.*. "
-            "ВАЖНО: при старте бота (в main или при инициализации) ОБЯЗАТЕЛЬНО сделай рассылку "
-            "всем пользователям из core.user_manager о новом обновлении. "
-            "Используй core.update_notifier.get_update_description() для получения описания "
-            "и core.user_manager.get_all_users() для получения списка chat_id. "
-            "Отправь сообщение каждому пользователю через bot.send_message()."
-            "Верни ПОЛНЫЙ код с новой фичей. Без объяснений, без markdown."
+            "Ты — разработчик телеграм-ботов. Добавь ОДНУ новую команду (/joke, /fact, /quote, /weather, /poll, /stats, /remind, /whatsnew). "
+            "Сохрани все существующие команды. Верни ПОЛНЫЙ код. Без markdown."
         )
         return self._call(code, system_prompt, temperature=1.0)
 
@@ -39,9 +30,10 @@ class LLMInterface:
         try:
             # Жёстко обрезаем код до 2500 символов, чтобы влезть в лимит 6000 TPM
             # Оставляем: импорты + огрызок кода = ~4000 токенов
-            max_code_len = 3000  # было 2500 — даём больше контекста
+            max_code_len = 3500
             if len(code) > max_code_len:
-                code = code[:2000] + "\n# ... пропущено ...\n" + code[-1000:]  # больше начала
+                # Берём первые 2500 + последние 1000
+                code = code[:2500] + "\n# ... код сокращён ...\n" + code[-1000:]
 
             chat = self.client.chat.completions.create(
                 messages=[
@@ -50,7 +42,7 @@ class LLMInterface:
                 ],
                 model="llama-3.1-8b-instant",
                 temperature=temperature,
-                max_tokens=2500,  # было 1500 — даём больше места для ответа
+                max_tokens=3000,  # больше места для ответа
             )
 
             result = self._clean(chat.choices[0].message.content)
