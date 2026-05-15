@@ -2,10 +2,14 @@
 """
 Дарвин — бот, который сам себя улучшает.
 Оркестратор цикла самосовершенствования.
+
+Этот файл НЕ редактируется нейросетью.
+LLM имеет доступ только к bot.py.
 """
 import sys
 import time
 import random
+import json
 import traceback
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,6 +17,7 @@ from pathlib import Path
 # 🔧 Автозагрузка .env файла
 try:
     from dotenv import load_dotenv
+
     env_path = Path(__file__).parent / ".env"
     if env_path.exists():
         load_dotenv(env_path)
@@ -31,6 +36,7 @@ from core.memory import Memory
 from core.validator import Validator
 from core.github_ops import GitHubOps
 from core.llm_interface import LLMInterface
+from github import InputGitTreeElement
 
 
 class DarwinOrchestrator:
@@ -88,6 +94,78 @@ class DarwinOrchestrator:
             "heartbeat"
         )
 
+    def _describe_changes(self, old_code: str, new_code: str) -> str:
+        """Просит LLM описать изменения понятным языком."""
+        try:
+            old_lines = old_code.split("\n")
+            new_lines = new_code.split("\n")
+
+            added = [l for l in new_lines if l not in old_lines]
+            removed = [l for l in old_lines if l not in new_lines]
+
+            diff_text = "Добавлено:\n" + "\n".join(added[:15]) + "\n\nУдалено:\n" + "\n".join(removed[:5])
+
+            prompt = (
+                "Ты — дружелюбный бот Дарвин. Опиши ОДНИМ предложением на русском, "
+                "какую новую функцию ты добавил в свой код или какой баг исправил. "
+                "Пиши от первого лица, весело и кратко. "
+                "Примеры:\n"
+                "- 'Добавил команду /joke — теперь я умею шутить!'\n"
+                "- 'Исправил баг с командой /start — она снова работает!'\n"
+                "- 'Научился показывать погоду по команде /weather!'\n"
+                "Только описание, ничего лишнего."
+            )
+
+            chat = self.llm.client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": prompt},
+                    {"role": "user", "content": f"Изменения в коде:\n{diff_text[:1500]}"}
+                ],
+                model="llama-3.1-8b-instant",
+                temperature=0.8,
+                max_tokens=100,
+            )
+
+            description = chat.choices[0].message.content.strip()
+            return description
+        except Exception as e:
+            self.logger.warning(f"Не удалось сгенерировать описание: {e}")
+            return "Добавил новую функцию! Попробуй /help, чтобы узнать, что изменилось 🧬"
+
+    def _save_update_description(self, description: str, commit_sha: str):
+        """Сохраняет описание в файл и пушит в репозиторий."""
+        update_info = {
+            "description": description,
+            "commit": commit_sha,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "version": len(self.memory.data["features"])
+        }
+
+        try:
+            content = json.dumps(update_info, ensure_ascii=False, indent=2)
+
+            blob = self.github.repo.create_git_blob(content, "utf-8")
+            ref = self.github.repo.get_git_ref("heads/main")
+            base_commit = self.github.repo.get_git_commit(ref.object.sha)
+
+            element = InputGitTreeElement(
+                path="last_update.json",
+                mode='100644',
+                type='blob',
+                sha=blob.sha
+            )
+
+            new_tree = self.github.repo.create_git_tree([element], base_commit.tree)
+            new_commit = self.github.repo.create_git_commit(
+                message="📝 Обновлено описание изменений",
+                tree=new_tree,
+                parents=[base_commit]
+            )
+            ref.edit(sha=new_commit.sha)
+            self.logger.info(f"📝 Описание сохранено: {description}")
+        except Exception as e:
+            self.logger.warning(f"Не удалось сохранить описание: {e}")
+
     def run_cycle(self):
         """Один полный цикл самосовершенствования."""
         cycle_start = datetime.now(timezone.utc)
@@ -136,8 +214,13 @@ class DarwinOrchestrator:
                         commit_sha = self.github.push(validated_code, sha, commit_msg)
                         self.memory.add_feature(validated_code, "fix")
                         self.memory.add_commit(commit_sha, "Auto-fix")
-                        code, sha = validated_code, commit_sha
                         stats["bugs_fixed"] = True
+
+                        # Генерируем описание исправления
+                        description = self._describe_changes(code, validated_code)
+                        self._save_update_description(description, commit_sha)
+
+                        code, sha = validated_code, commit_sha
                     else:
                         stats["errors"].append(f"Валидация фикса: {err}")
             else:
@@ -176,6 +259,12 @@ class DarwinOrchestrator:
                             self.memory.add_feature(validated_code, "feature")
                             self.memory.add_commit(commit_sha, "Auto-feature")
                             stats["feature_added"] = True
+
+                            # Генерируем описание новой фичи
+                            description = self._describe_changes(code, validated_code)
+                            self._save_update_description(description, commit_sha)
+
+                            code, sha = validated_code, commit_sha
                         else:
                             stats["errors"].append(f"Валидация фичи: {err}")
                 else:

@@ -1,6 +1,6 @@
 # .github/workflows/bot_runner.yml
 # Дарвин: запуск телеграм-бота
-# Запускается каждые 10 минут, работает 9 минут
+# Запускается каждые 10 минут + при каждом пуше в main
 
 name: Run Darwin Bot
 
@@ -8,6 +8,11 @@ on:
   schedule:
     - cron: '*/10 * * * *'  # каждые 10 минут
   workflow_dispatch:         # ручной запуск
+  push:                      # ← НОВОЕ: запуск при пуше
+    branches:
+      - main
+    paths:
+      - 'bot.py'             # только если изменился bot.py
 
 jobs:
   run-bot:
@@ -34,5 +39,5 @@ jobs:
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
         run: |
-          # Запускаем бота на 9 минут (540 секунд)
+          # Запускаем бота на 9 минут
           timeout 540 python bot.py || true
