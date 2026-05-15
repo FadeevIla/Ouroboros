@@ -1,0 +1,38 @@
+# .github/workflows/bot_runner.yml
+# Дарвин: запуск телеграм-бота
+# Запускается каждые 10 минут, работает 9 минут
+
+name: Run Darwin Bot
+
+on:
+  schedule:
+    - cron: '*/10 * * * *'  # каждые 10 минут
+  workflow_dispatch:         # ручной запуск
+
+jobs:
+  run-bot:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout репозитория
+        uses: actions/checkout@v4
+
+      - name: Установка Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Установка зависимостей
+        run: pip install python-telegram-bot PyGithub groq pyflakes requests
+
+      - name: Запуск Дарвина
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO_NAME: ${{ github.repository }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+          TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        run: |
+          # Запускаем бота на 9 минут (540 секунд)
+          timeout 540 python bot.py || true
