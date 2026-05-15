@@ -68,7 +68,7 @@ class Validator:
             if not syntax_ok:
                 self.logger.warning(f"[{attempt + 1}] {syntax_err}")
                 if attempt < max_retries - 1:
-                    time.sleep(5)  # ← ПАУЗА 5 СЕКУНД ПЕРЕД ПОВТОРНЫМ ЗАПРОСОМ
+                    time.sleep(10)  # было 5 секунд
                     code = self._llm_fix(code, syntax_err, "syntax")
                     continue
                 return False, code, syntax_err
@@ -110,7 +110,7 @@ class Validator:
             ],
             model="llama-3.1-8b-instant",
             temperature=temp,
-            max_tokens=2000,
+            max_tokens=3000,  # было 2000
         )
         return self._clean_output(chat.choices[0].message.content)
 

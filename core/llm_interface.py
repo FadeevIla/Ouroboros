@@ -38,13 +38,9 @@ class LLMInterface:
         try:
             # Жёстко обрезаем код до 2500 символов, чтобы влезть в лимит 6000 TPM
             # Оставляем: импорты + огрызок кода = ~4000 токенов
-            max_code_len = 2500
+            max_code_len = 3000  # было 2500 — даём больше контекста
             if len(code) > max_code_len:
-                self.logger.warning(
-                    f"Код слишком большой ({len(code)} символов), обрезаю до {max_code_len}"
-                )
-                # Берём первые 1500 символов (импорты и начало) + последние 1000 (конец)
-                code = code[:1500] + "\n# ... (середина кода пропущена) ...\n" + code[-1000:]
+                code = code[:2000] + "\n# ... пропущено ...\n" + code[-1000:]  # больше начала
 
             chat = self.client.chat.completions.create(
                 messages=[
@@ -53,7 +49,7 @@ class LLMInterface:
                 ],
                 model="llama-3.1-8b-instant",
                 temperature=temperature,
-                max_tokens=1500,  # Ограничиваем ответ, чтобы весь запрос + ответ < 6000
+                max_tokens=2500,  # было 1500 — даём больше места для ответа
             )
 
             result = self._clean(chat.choices[0].message.content)
