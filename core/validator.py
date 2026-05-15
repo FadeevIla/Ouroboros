@@ -1,6 +1,7 @@
-# core/validator.py
+# core/validator.py — ИСПРАВЛЕННАЯ ВЕРСИЯ
 """Валидация Python-кода перед пушем."""
 import os
+import time  # ← ДОБАВЬ ЭТУ СТРОКУ
 import tempfile
 from groq import Groq
 
@@ -20,7 +21,6 @@ class Validator:
 
     def validate_imports(self, code):
         required = ["telegram", "Telegram", "Bot", "Application"]
-        # Проверяем, что код похож на телеграм-бота
         has_bot_framework = any(kw in code for kw in required)
         if not has_bot_framework:
             return False, "Код не похож на телеграм-бота (нет импортов telegram)"
@@ -68,6 +68,7 @@ class Validator:
             if not syntax_ok:
                 self.logger.warning(f"[{attempt + 1}] {syntax_err}")
                 if attempt < max_retries - 1:
+                    time.sleep(5)  # ← ПАУЗА 5 СЕКУНД ПЕРЕД ПОВТОРНЫМ ЗАПРОСОМ
                     code = self._llm_fix(code, syntax_err, "syntax")
                     continue
                 return False, code, syntax_err
@@ -76,6 +77,7 @@ class Validator:
             if not imports_ok:
                 self.logger.warning(f"[{attempt + 1}] {imports_err}")
                 if attempt < max_retries - 1:
+                    time.sleep(5)  # ← ПАУЗА 5 СЕКУНД
                     code = self._llm_fix(code, imports_err, "imports")
                     continue
                 return False, code, imports_err
@@ -83,7 +85,6 @@ class Validator:
             pyflakes_ok, pyflakes_err = self.validate_pyflakes(code)
             if not pyflakes_ok:
                 self.logger.warning(f"[{attempt + 1}] {pyflakes_err}")
-                # Не блокируем, но предупреждаем
 
             self.logger.info("Валидация пройдена")
             return True, code, None
@@ -98,6 +99,10 @@ class Validator:
         }
         prompt, temp = prompts.get(fix_type, prompts["syntax"])
 
+        # Обрезаем код перед отправкой на исправление
+        if len(code) > 3000:
+            code = code[:1500] + "\n# ... пропущено ...\n" + code[-1500:]
+
         chat = self.groq_client.chat.completions.create(
             messages=[
                 {"role": "system", "content": prompt},
@@ -105,7 +110,7 @@ class Validator:
             ],
             model="llama-3.1-8b-instant",
             temperature=temp,
-            max_tokens=15000,
+            max_tokens=2000,
         )
         return self._clean_output(chat.choices[0].message.content)
 
