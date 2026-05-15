@@ -127,7 +127,7 @@ class DarwinOrchestrator:
                     {"role": "system", "content": prompt},
                     {"role": "user", "content": f"Изменения в коде:\n{diff_text[:1500]}"}
                 ],
-                model="deepseek/deepseek-r1:free",
+                model="meta-llama/llama-3.3-70b-instruct:free",
                 temperature=0.8,
                 max_tokens=100,
             )

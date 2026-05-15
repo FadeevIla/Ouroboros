@@ -63,7 +63,7 @@ class LLMInterface:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Код bot.py:\n\n{code}"},
                 ],
-                model="deepseek/deepseek-r1:free",
+                model="meta-llama/llama-3.3-70b-instruct:free",
                 temperature=temperature,
                 max_tokens=3000,
             )

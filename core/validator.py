@@ -123,7 +123,7 @@ class Validator:
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": f"Ошибка: {error}\n\nКод:\n{code}"},
             ],
-            model="deepseek/deepseek-r1:free",
+            model="meta-llama/llama-3.3-70b-instruct:free",
             temperature=temp,
             max_tokens=3000,
         )
