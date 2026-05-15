@@ -92,28 +92,45 @@ class Validator:
         return False, code, "Исчерпаны попытки"
 
     def _llm_fix(self, code, error, fix_type):
+        """Исправляет ошибку через OpenRouter."""
+        import time
+        from openai import OpenAI
+
+        # Используем тот же клиент, что и в LLMInterface
+        client = self.groq_client  # Это теперь OpenAI клиент
+
         prompts = {
-            "syntax": ("Исправь ТОЛЬКО синтаксическую ошибку. Верни полный код без markdown.", 0.1),
+            "syntax": (
+                "Ты — Python-разработчик. Исправь ТОЛЬКО синтаксическую ошибку. "
+                "Верни полный код без markdown.",
+                0.1,
+            ),
             "imports": (
-                "Исправь проблемы с импортами. Добавь недостающие, убери опасные. Верни полный код без markdown.", 0.1),
+                "Исправь проблемы с импортами. Добавь недостающие, убери опасные. "
+                "Верни полный код без markdown.",
+                0.1,
+            ),
         }
         prompt, temp = prompts.get(fix_type, prompts["syntax"])
 
-        # Обрезаем код перед отправкой на исправление
-        if len(code) > 3000:
-            code = code[:1500] + "\n# ... пропущено ...\n" + code[-1500:]
+        # Обрезаем код для исправления
+        if len(code) > 4000:
+            code = code[:3000] + "\n# ... пропущено ...\n" + code[-1000:]
 
-        chat = self.groq_client.chat.completions.create(
+        time.sleep(3)  # Небольшая пауза
+
+        chat = client.chat.completions.create(
             messages=[
                 {"role": "system", "content": prompt},
-                {"role": "user", "content": f"Ошибка: {error}\n\nКод:\n{code}"}
+                {"role": "user", "content": f"Ошибка: {error}\n\nКод:\n{code}"},
             ],
-            model="llama-3.1-8b-instant",
+            model="deepseek/deepseek-r1:free",
             temperature=temp,
-            max_tokens=3000,  # было 2000
+            max_tokens=3000,
         )
-        return self._clean_output(chat.choices[0].message.content)
 
+        return self._clean_output(chat.choices[0].message.content)
+    
     @staticmethod
     def _clean_output(raw):
         cleaned = raw.strip()

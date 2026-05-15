@@ -28,7 +28,7 @@ jobs:
           python-version: '3.11'
 
       - name: Установка зависимостей
-        run: pip install python-telegram-bot PyGithub groq pyflakes requests
+        run: pip install PyGithub pyflakes requests python-dotenv openai
 
       - name: Запуск Дарвина
         env:

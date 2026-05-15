@@ -70,7 +70,7 @@ class DarwinOrchestrator:
 
         # LLM интерфейс
         self.llm = LLMInterface(
-            self.config["GROQ_API_KEY"],
+            self.config["OPENROUTER_API_KEY"],
             self.logger,
             self.notifier
         )
