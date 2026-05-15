@@ -68,7 +68,7 @@ class LLMInterface:
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Вот текущий код bot.py:\n\n{code}"}
                 ],
-                model="llama-3.1-8b-instant",
+                model="llama-3.3-70b-versatile",
                 temperature=temperature,
                 max_tokens=15000,
             )
