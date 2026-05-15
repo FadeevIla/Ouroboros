@@ -1,7 +1,6 @@
-# core/llm_interface.py — ИСПРАВЛЕННАЯ ВЕРСИЯ
+# core/llm_interface.py
 """Интерфейс для работы с Groq LLM."""
 from groq import Groq
-
 
 class LLMInterface:
     def __init__(self, api_key, logger, notifier=None):
@@ -13,21 +12,36 @@ class LLMInterface:
 
     def analyze_bugs(self, code):
         self.logger.info("LLM: поиск багов")
-        system_prompt = """Ты — senior Python-разработчик. Исправь баги в коде телеграм-бота: потерянные await, необработанные исключения, ошибки в API Telegram, проблемы с типами. НЕ трогай импорты из core.*. Верни ПОЛНЫЙ исправленный код. Без объяснений, без markdown."""
-
+        system_prompt = (
+            "Ты — senior Python-разработчик. Исправь баги в коде телеграм-бота: "
+            "потерянные await, необработанные исключения, ошибки в API Telegram, "
+            "проблемы с типами. НЕ трогай импорты из core.*. "
+            "Верни ПОЛНЫЙ исправленный код. Без объяснений, без markdown."
+        )
         return self._call(code, system_prompt, temperature=0.2)
 
     def generate_feature(self, code):
         self.logger.info("LLM: генерация фичи")
-        system_prompt = """Ты — разработчик телеграм-ботов. Добавь одну новую команду: /joke, /fact, /quote, /weather, /poll, /stats или /remind. НЕ ломай существующие команды. НЕ добавляй os.system, subprocess, eval, exec. НЕ трогай импорты core.*. Верни ПОЛНЫЙ код с новой фичей. Без объяснений, без markdown."""
-
+        system_prompt = (
+            "Ты — разработчик телеграм-ботов. Добавь одну новую команду: "
+            "/joke, /fact, /quote, /weather, /poll, /stats или /remind. "
+            "НЕ ломай существующие команды. НЕ добавляй os.system, subprocess, eval, exec. "
+            "НЕ трогай импорты core.*. "
+            "Верни ПОЛНЫЙ код с новой фичей. Без объяснений, без markdown."
+        )
         return self._call(code, system_prompt, temperature=1.0)
 
     def _call(self, code, system_prompt, temperature):
         try:
-            # Если код слишком большой — обрезаем до 4000 символов
-            if len(code) > 8000:
-                code = code[:8000] + "\n# ... (код обрезан для лимита токенов)"
+            # Жёстко обрезаем код до 2500 символов, чтобы влезть в лимит 6000 TPM
+            # Оставляем: импорты + огрызок кода = ~4000 токенов
+            max_code_len = 2500
+            if len(code) > max_code_len:
+                self.logger.warning(
+                    f"Код слишком большой ({len(code)} символов), обрезаю до {max_code_len}"
+                )
+                # Берём первые 1500 символов (импорты и начало) + последние 1000 (конец)
+                code = code[:1500] + "\n# ... (середина кода пропущена) ...\n" + code[-1000:]
 
             chat = self.client.chat.completions.create(
                 messages=[
@@ -36,11 +50,11 @@ class LLMInterface:
                 ],
                 model="llama-3.1-8b-instant",
                 temperature=temperature,
-                max_tokens=8000, # Ограничиваем ответ
+                max_tokens=1500,  # Ограничиваем ответ, чтобы весь запрос + ответ < 6000
             )
 
             result = self._clean(chat.choices[0].message.content)
-            tokens = chat.usage.total_tokens if hasattr(chat, 'usage') else '?'
+            tokens = chat.usage.total_tokens if hasattr(chat, "usage") else "?"
             self.logger.info(f"LLM ответ: {len(result)} символов, {tokens} токенов")
             return result
         except Exception as e:
