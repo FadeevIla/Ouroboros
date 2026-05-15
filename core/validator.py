@@ -3,12 +3,11 @@
 import os
 import time  # ← ДОБАВЬ ЭТУ СТРОКУ
 import tempfile
-from groq import Groq
 
 
 class Validator:
-    def __init__(self, groq_client, logger, notifier=None):
-        self.groq_client = groq_client
+    def __init__(self, llm_client, logger, notifier=None):
+        self.llm_client = llm_client
         self.logger = logger
         self.notifier = notifier
 
@@ -119,7 +118,7 @@ class Validator:
 
         time.sleep(3)  # Небольшая пауза
 
-        chat = client.chat.completions.create(
+        chat = self.llm_client.chat.completions.create(
             messages=[
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": f"Ошибка: {error}\n\nКод:\n{code}"},
@@ -130,7 +129,7 @@ class Validator:
         )
 
         return self._clean_output(chat.choices[0].message.content)
-    
+
     @staticmethod
     def _clean_output(raw):
         cleaned = raw.strip()

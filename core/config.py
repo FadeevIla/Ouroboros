@@ -49,7 +49,7 @@ def load_config():
         "MEMORY_FILE": os.environ.get("MEMORY_FILE", "feature_memory.json"),
 
         # LLM
-        "GROQ_API_KEY": os.environ.get("GROQ_API_KEY"),
+        "OPENROUTER_API_KEY": os.environ.get("OPENROUTER_API_KEY"),
 
         # Telegram бот
         "TELEGRAM_BOT_TOKEN": os.environ.get("TELEGRAM_BOT_TOKEN"),
@@ -66,7 +66,7 @@ def load_config():
     required = {
         "GITHUB_TOKEN": config["GITHUB_TOKEN"],
         "REPO_NAME": config["REPO_NAME"],
-        "GROQ_API_KEY": config["GROQ_API_KEY"],
+        "OPENROUTER_API_KEY": config["OPENROUTER_API_KEY"],
     }
 
     missing = [name for name, val in required.items() if not val]
