@@ -224,6 +224,8 @@ class DarwinOrchestrator:
                         # Генерируем описание исправления
                         description = self._describe_changes(code, validated_code)
                         self._save_update_description(description, commit_sha)
+                        self.notifier.send(f"🐛 Исправлено: {description}", "fix")  # для багов
+                        self.notifier.send(f"✨ Добавлено: {description}", "feature")  # для фич
 
                         code, sha = validated_code, commit_sha
                     else:
@@ -268,6 +270,7 @@ class DarwinOrchestrator:
                             # Генерируем описание новой фичи
                             description = self._describe_changes(code, validated_code)
                             self._save_update_description(description, commit_sha)
+                            self.notifier.send(f"✨ Добавлено: {description}", "feature")  # ← ДОБАВЬ ЭТУ СТРОКУ
 
                             code, sha = validated_code, commit_sha
                         else:
