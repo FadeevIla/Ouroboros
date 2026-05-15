@@ -91,12 +91,7 @@ class Validator:
         return False, code, "Исчерпаны попытки"
 
     def _llm_fix(self, code, error, fix_type):
-        """Исправляет ошибку через OpenRouter."""
         import time
-        from openai import OpenAI
-
-        # Используем тот же клиент, что и в LLMInterface
-        client = self.groq_client  # Это теперь OpenAI клиент
 
         prompts = {
             "syntax": (
@@ -105,30 +100,56 @@ class Validator:
                 0.1,
             ),
             "imports": (
-                "Исправь проблемы с импортами. Добавь недостающие, убери опасные. "
-                "Верни полный код без markdown.",
+                "Исправь проблемы с импортами. Верни полный код без markdown.",
                 0.1,
             ),
         }
         prompt, temp = prompts.get(fix_type, prompts["syntax"])
 
-        # Обрезаем код для исправления
         if len(code) > 4000:
             code = code[:3000] + "\n# ... пропущено ...\n" + code[-1000:]
 
-        time.sleep(3)  # Небольшая пауза
+        # Автоповторы при ошибках
+        for attempt in range(3):
+            try:
+                time.sleep(3)
+                chat = self.llm_client.chat.completions.create(
+                    messages=[
+                        {"role": "system", "content": prompt},
+                        {"role": "user", "content": f"Ошибка: {error}\n\nКод:\n{code}"},
+                    ],
+                    model="google/gemini-2.0-flash-001:free",
+                    temperature=temp,
+                    max_tokens=3000,
+                )
+                return self._clean_output(chat.choices[0].message.content)
+            except Exception as e:
+                error_str = str(e)
+                if "429" in error_str or "rate" in error_str.lower():
+                    wait = (attempt + 1) * 20
+                    self.logger.warning(f"Рейт-лимит валидатора, жду {wait} сек")
+                    time.sleep(wait)
+                elif "404" in error_str:
+                    # Пробуем запасную модель
+                    self.logger.warning("Gemini недоступен для валидации, пробую Llama")
+                    try:
+                        chat = self.llm_client.chat.completions.create(
+                            messages=[
+                                {"role": "system", "content": prompt},
+                                {"role": "user", "content": f"Ошибка: {error}\n\nКод:\n{code}"},
+                            ],
+                            model="meta-llama/llama-3.3-70b-instruct:free",
+                            temperature=temp,
+                            max_tokens=3000,
+                        )
+                        return self._clean_output(chat.choices[0].message.content)
+                    except:
+                        time.sleep(30)
+                else:
+                    self.logger.warning(f"Ошибка LLM в валидаторе: {e}")
+                    time.sleep(10)
 
-        chat = self.llm_client.chat.completions.create(
-            messages=[
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": f"Ошибка: {error}\n\nКод:\n{code}"},
-            ],
-            model="meta-llama/llama-3.3-70b-instruct:free",
-            temperature=temp,
-            max_tokens=3000,
-        )
-
-        return self._clean_output(chat.choices[0].message.content)
+        raise Exception("Не удалось исправить ошибку валидации")
 
     @staticmethod
     def _clean_output(raw):
