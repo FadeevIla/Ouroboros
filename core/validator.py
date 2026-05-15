@@ -103,7 +103,7 @@ class Validator:
                 {"role": "system", "content": prompt},
                 {"role": "user", "content": f"Ошибка: {error}\n\nКод:\n{code}"}
             ],
-            model="llama-3.2-3b-preview",
+            model="llama-3.1-8b-instant",
             temperature=temp,
             max_tokens=15000,
         )

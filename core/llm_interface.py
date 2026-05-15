@@ -26,18 +26,17 @@ class LLMInterface:
     def _call(self, code, system_prompt, temperature):
         try:
             # Если код слишком большой — обрезаем до 4000 символов
-            if len(code) > 4000:
-                self.logger.warning(f"Код слишком большой ({len(code)} символов), обрезаю до 4000")
-                code = code[:4000] + "\n# ... (код обрезан для лимита токенов)"
+            if len(code) > 8000:
+                code = code[:8000] + "\n# ... (код обрезан для лимита токенов)"
 
             chat = self.client.chat.completions.create(
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": f"Код bot.py:\n\n{code}"}
                 ],
-                model="llama-3.2-3b-preview",  # Бесплатная, лимит 8000 TPM
+                model="llama-3.1-8b-instant",
                 temperature=temperature,
-                max_tokens=4000,  # Ограничиваем ответ
+                max_tokens=8000, # Ограничиваем ответ
             )
 
             result = self._clean(chat.choices[0].message.content)
