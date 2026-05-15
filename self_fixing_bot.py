@@ -62,6 +62,11 @@ class DarwinOrchestrator:
         # Память
         self.memory = Memory(self.config["MEMORY_FILE"], self.logger)
 
+        # Создаём users.json, если его нет
+        if not os.path.exists("users.json"):
+            with open("users.json", "w", encoding="utf-8") as f:
+                json.dump([], f)
+
         # LLM интерфейс
         self.llm = LLMInterface(
             self.config["GROQ_API_KEY"],

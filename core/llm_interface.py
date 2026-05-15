@@ -23,13 +23,14 @@ class LLMInterface:
     def generate_feature(self, code):
         self.logger.info("LLM: генерация фичи")
         system_prompt = (
-            "Ты — разработчик телеграм-ботов. Добавь одну новую команду: "
-            "/joke, /fact, /quote, /weather, /poll, /stats или /remind. "
+            "Ты — разработчик телеграм-ботов. Добавь одну новую команду. "
             "НЕ ломай существующие команды. НЕ добавляй os.system, subprocess, eval, exec. "
             "НЕ трогай импорты core.*. "
-            "ВАЖНО: Если в коде ещё нет команды /whatsnew, добавь её. "
-            "Она должна использовать core.update_notifier.get_update_description() "
-            "и core.update_notifier.format_update_message() для показа информации об обновлениях. "
+            "ВАЖНО: при старте бота (в main или при инициализации) ОБЯЗАТЕЛЬНО сделай рассылку "
+            "всем пользователям из core.user_manager о новом обновлении. "
+            "Используй core.update_notifier.get_update_description() для получения описания "
+            "и core.user_manager.get_all_users() для получения списка chat_id. "
+            "Отправь сообщение каждому пользователю через bot.send_message()."
             "Верни ПОЛНЫЙ код с новой фичей. Без объяснений, без markdown."
         )
         return self._call(code, system_prompt, temperature=1.0)
