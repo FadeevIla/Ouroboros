@@ -27,6 +27,9 @@ class LLMInterface:
             "/joke, /fact, /quote, /weather, /poll, /stats или /remind. "
             "НЕ ломай существующие команды. НЕ добавляй os.system, subprocess, eval, exec. "
             "НЕ трогай импорты core.*. "
+            "ВАЖНО: Если в коде ещё нет команды /whatsnew, добавь её. "
+            "Она должна использовать core.update_notifier.get_update_description() "
+            "и core.update_notifier.format_update_message() для показа информации об обновлениях. "
             "Верни ПОЛНЫЙ код с новой фичей. Без объяснений, без markdown."
         )
         return self._call(code, system_prompt, temperature=1.0)
