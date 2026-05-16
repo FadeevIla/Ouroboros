@@ -3,12 +3,13 @@ import asyncio
 import random
 import logging
 import aiohttp
+import os
 
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.utils import executor
 
-from core import environ_map
+from core import environ_map, update_notifier
 
 logger = logging.getLogger(__name__)
 BOT_TOKEN = environ_map['TELEGRAM_BOT_TOKEN']
@@ -17,7 +18,7 @@ async def start(message: types.Message):
     await message.reply("Привет, я бот!")
 
 async def help_command(message: types.Message):
-    await message.reply('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info, /whatsnew, /stats, /horoscope')
+    await message.reply('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info, /whatsnew, /horoscope')
 
 async def about(message: types.Message):
     await message.reply('Это бот, который может ответить на различные вопросы.')
@@ -36,7 +37,7 @@ async def joke(message: types.Message):
 async def fact(message: types.Message):
     facts = [
         'Солнце весит 330 000 масс-сон, что примерно в 330 000 раз больше, чем Земля.',
-        'Самая большая планета в наше солнечной системы - Юпитер.',
+        'Самая большая планета в нашей солнечной системе - Юпитер.',
         'Самая дальняя планета от Солнца - Плутон.'
     ]
     await message.reply(random.choice(facts))
@@ -50,9 +51,12 @@ async def quote(message: types.Message):
     await message.reply(random.choice(quotes))
 
 async def weather(message: types.Message):
+    if 'OPENWEATHERMAP_API_KEY' not in os.environ:
+        await message.reply('Пожалуйста, добавьте ключ OPENWEATHERMAP_API_KEY в переменные окружения.')
+        return
     try:
         city = message.text.split()[1]
-        api_key = environ_map['OPENWEATHERMAP_API_KEY']
+        api_key = os.environ['OPENWEATHERMAP_API_KEY']
         url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}'
         async with aiohttp.ClientSession() as session:
             async with session.get(url) as response:
@@ -67,43 +71,31 @@ async def weather(message: types.Message):
         await message.reply('Ошибка при получении погоды.')
 
 async def stats(message: types.Message):
-    await message.reply('Статистика бота.')
+    commands = [
+        'start', 'help', 'about', 'status', 'joke', 'fact', 'quote', 'weather', 'stats', 'poll', 'remind', 'info', 'whatsnew', 'horoscope'
+    ]
+    await message.reply('Список команд бота.')
 
 async def poll(message: types.Message):
-    await message.reply('Опрос бота.')
+    await message.reply('Это команда для создания опроса.')
 
 async def remind(message: types.Message):
-    await message.reply('Напоминание бота.')
+    await message.reply('Это команда для напоминания.')
 
 async def info(message: types.Message):
-    await message.reply('Информация о боте.')
+    await message.reply('Это команда для получения информации.')
 
 async def whatsnew(message: types.Message):
-    await message.reply('Что нового в боте.')
+    await message.reply('Это команда для получения новостей.')
 
 async def remind_me(message: types.Message):
-    await message.reply('Напоминание для вас.')
+    await message.reply('Это команда для напоминания мне.')
 
 async def horoscope(message: types.Message):
-    signs = {
-        'aries': 'Овен',
-        'taurus': 'Телец',
-        'gemini': 'Близнецы',
-        'cancer': 'Рак',
-        'leo': 'Лев',
-        'virgo': 'Дева',
-        'libra': 'Весы',
-        'scorpio': 'Скорпион',
-        'sagittarius': 'Стрелец',
-        'capricorn': 'Козерог',
-        'aquarius': 'Водолей',
-        'pisces': 'Рыбы'
-    }
-    sign = message.text.split()[1].lower()
-    if sign in signs:
-        await message.reply(f'Гороскоп для {signs[sign]}')
-    else:
-        await message.reply('Неправильный знак зодиака')
+    await message.reply('Это команда для получения гороскопа.')
+
+async def poll_command(message: types.Message):
+    await message.reply('Это команда для создания опроса.')
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(BOT_TOKEN)
@@ -123,4 +115,4 @@ dp.register_message_handler(info, commands=['info'])
 dp.register_message_handler(whatsnew, commands=['whatsnew'])
 dp.register_message_handler(remind_me, commands=['remindme'])
 dp.register_message_handler(horoscope, commands=['horoscope'])
-executor.start_polling(dp, skip_updates=True)
+executor.start_polling(dp)
