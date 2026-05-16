@@ -1,8 +1,8 @@
-python-telegram-bot>=20.7
-PyGithub>=2.1.1
-pyflakes>=3.1.0
-requests>=2.31.0
-python-dotenv>=1.0.0
-openai>=1.0.0
-aiohttp
+PyGithub
 aiogram==2.25.1
+aiohttp
+core
+openai
+pyflakes
+python-dotenv
+requests
