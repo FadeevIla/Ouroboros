@@ -78,7 +78,7 @@ async def poll(message: types.Message):
     await message.reply('Функция опроса в разработке.')
 
 async def remind(message: types.Message):
-    await message.reply('Функция напоминаний в разработке.')
+    await message.reply('Функция напоминания в разработке.')
 
 async def info(message: types.Message):
     await message.reply('Функция информации в разработке.')
@@ -87,19 +87,13 @@ async def whatsnew(message: types.Message):
     await message.reply('Функция "что нового" в разработке.')
 
 async def remind_me(message: types.Message):
-    await message.reply('Функция напоминаний в разработке.')
+    await message.reply('Функция напоминания в разработке.')
 
 async def horoscope(message: types.Message):
     await message.reply('Функция гороскопа в разработке.')
 
 async def random_command(message: types.Message):
-    try:
-        min_val, max_val = map(int, message.text.split()[1:])
-        random_number = secrets.randbelow(max_val - min_val + 1) + min_val
-        await message.reply(f'Случайное число от {min_val} до {max_val}: {random_number}')
-    except Exception as e:
-        logger.error(f'Ошибка при генерации случайного числа: {e}')
-        await message.reply('Ошибка при генерации случайного числа.')
+    await message.reply('Функция случайной команды в разработке.')
 
 bot = Bot(token=BOT_TOKEN)
 storage = MemoryStorage()
@@ -121,4 +115,6 @@ dp.register_message_handler(whatsnew, commands=['whatsnew'])
 dp.register_message_handler(remind_me, commands=['remindme'])
 dp.register_message_handler(horoscope, commands=['horoscope'])
 dp.register_message_handler(random_command, commands=['random'])
-executor.start_polling(dp)
+
+if __name__ == '__main__':
+    executor.start_polling(dp)
