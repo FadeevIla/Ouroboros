@@ -29,6 +29,8 @@ class LLMInterface:
             "- Импорты: from aiogram import Bot, Dispatcher, types\n"
             "- Типы: from aiogram.types import Message, CallbackQuery\n"
             "- НЕ используй Update из aiogram.types (его нет в aiogram 2.x)\n"
+            "- НЕ используй skip_updates=True при запуске — это вызывает ошибку TerminatedByOtherGetUpdates\n"
+            "- Используй executor.start_polling(dp) БЕЗ skip_updates\n"
             "- Используй message.reply(), НЕ message.reply_text()\n\n"
             "НЕ трогай импорты из core.*.\n"
             "НЕ удаляй строку from core import environ_map — она нужна.\n"
