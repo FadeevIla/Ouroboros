@@ -122,18 +122,45 @@ class DarwinOrchestrator:
                 "Только описание, ничего лишнего."
             )
 
-            chat = self.llm.client.chat.completions.create(
-                messages=[
-                    {"role": "system", "content": prompt},
-                    {"role": "user", "content": f"Изменения в коде:\n{diff_text[:1500]}"}
-                ],
-                model="google/gemini-2.0-flash-001:free",
-                temperature=0.8,
-                max_tokens=100,
-            )
+            # Перебираем модели, пока одна не ответит
+            models = [
+                "meta-llama/llama-3.3-70b-instruct:free",
+                "google/gemini-2.0-flash-001:free",
+                "meta-llama/llama-3.1-8b-instruct:free",
+            ]
 
-            description = chat.choices[0].message.content.strip()
-            return description
+            description = None
+            last_error = None
+
+            for model in models:
+                try:
+                    self.logger.info(f"Описание: пробую модель {model}")
+                    chat = self.llm.client.chat.completions.create(
+                        messages=[
+                            {"role": "system", "content": prompt},
+                            {"role": "user", "content": f"Изменения в коде:\n{diff_text[:1500]}"}
+                        ],
+                        model=model,
+                        temperature=0.8,
+                        max_tokens=100,
+                    )
+                    description = chat.choices[0].message.content.strip()
+                    if description:
+                        self.logger.info(f"Описание получено от {model}: {description}")
+                        break
+                except Exception as e:
+                    last_error = e
+                    self.logger.warning(f"Модель {model} не ответила: {str(e)[:100]}")
+                    import time
+                    time.sleep(5)
+                    continue
+
+            if description:
+                return description
+            else:
+                self.logger.warning(f"Все модели недоступны для описания. Последняя ошибка: {last_error}")
+                return "Добавил новую функцию! Попробуй /help, чтобы узнать, что изменилось 🧬"
+
         except Exception as e:
             self.logger.warning(f"Не удалось сгенерировать описание: {e}")
             return "Добавил новую функцию! Попробуй /help, чтобы узнать, что изменилось 🧬"

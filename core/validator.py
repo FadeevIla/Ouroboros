@@ -67,7 +67,7 @@ class Validator:
             if not syntax_ok:
                 self.logger.warning(f"[{attempt + 1}] {syntax_err}")
                 if attempt < max_retries - 1:
-                    time.sleep(15)  # больше паузы между попытками
+                    time.sleep(30)  # больше паузы между попытками
                     code = self._llm_fix(code, syntax_err, "syntax")
                     continue
                 return False, code, syntax_err
@@ -76,7 +76,7 @@ class Validator:
             if not imports_ok:
                 self.logger.warning(f"[{attempt + 1}] {imports_err}")
                 if attempt < max_retries - 1:
-                    time.sleep(5)  # ← ПАУЗА 5 СЕКУНД
+                    time.sleep(30)  # ← ПАУЗА 5 СЕКУНД
                     code = self._llm_fix(code, imports_err, "imports")
                     continue
                 return False, code, imports_err
@@ -112,7 +112,7 @@ class Validator:
         # Автоповторы при ошибках
         for attempt in range(3):
             try:
-                time.sleep(3)
+                time.sleep(30)
                 chat = self.llm_client.chat.completions.create(
                     messages=[
                         {"role": "system", "content": prompt},
@@ -147,7 +147,7 @@ class Validator:
                         time.sleep(30)
                 else:
                     self.logger.warning(f"Ошибка LLM в валидаторе: {e}")
-                    time.sleep(10)
+                    time.sleep(30)
 
         raise Exception("Не удалось исправить ошибку валидации")
 

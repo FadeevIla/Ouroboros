@@ -68,61 +68,46 @@ class LLMInterface:
         if len(code) > max_code_len:
             code = code[:3000] + "\n# ... середина пропущена ...\n" + code[-1000:]
 
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                chat = self.client.chat.completions.create(
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": f"Код bot.py:\n\n{code}"},
-                    ],
-                    model="google/gemini-2.0-flash-001:free",
-                    temperature=temperature,
-                    max_tokens=3000,
-                )
-                result = self._clean(chat.choices[0].message.content)
-                tokens = chat.usage.total_tokens if hasattr(chat, "usage") else "?"
-                self.logger.info(f"LLM ответ: {len(result)} символов, {tokens} токенов")
-                return result
-            except Exception as e:
-                error_str = str(e)
-                # Рейт-лимит или модель перегружена — ждём и пробуем снова
-                if "429" in error_str or "rate" in error_str.lower():
-                    wait_time = (attempt + 1) * 30
-                    self.logger.warning(f"Рейт-лимит, жду {wait_time} сек (попытка {attempt + 1}/{max_retries})")
-                    time.sleep(wait_time)
-                # Модель недоступна — пробуем другую
-                elif "404" in error_str or "not found" in error_str.lower():
-                    self.logger.warning(f"Модель недоступна, пробую запасную (попытка {attempt + 1}/{max_retries})")
-                    # На второй попытке пробуем другую бесплатную модель
-                    if attempt == 0:
-                        time.sleep(10)
-                        continue  # попробуем ещё раз ту же
-                    elif attempt == 1:
-                        # Меняем модель на запасную
-                        self.logger.info("Переключаюсь на запасную модель...")
-                        try:
-                            chat = self.client.chat.completions.create(
-                                messages=[
-                                    {"role": "system", "content": system_prompt},
-                                    {"role": "user", "content": f"Код bot.py:\n\n{code}"},
-                                ],
-                                model="meta-llama/llama-3.3-70b-instruct:free",
-                                temperature=temperature,
-                                max_tokens=3000,
-                            )
-                            result = self._clean(chat.choices[0].message.content)
-                            return result
-                        except Exception as e2:
-                            self.logger.warning(f"Запасная модель тоже не сработала: {e2}")
-                            time.sleep(30)
-                else:
-                    self.logger.error(f"LLM error: {e}")
-                    if self.notifier:
-                        self.notifier.send(f"❌ Ошибка LLM: {error_str[:200]}", "error")
-                    raise
+        # Модели для перебора (основная + запасные)
+        models = [
+            "meta-llama/llama-3.3-70b-instruct:free",  # основная
+            "google/gemini-2.0-flash-001:free",  # запасная 1
+            "meta-llama/llama-3.1-8b-instruct:free",  # запасная 2
+        ]
 
-        raise Exception("Исчерпаны попытки вызова LLM")
+        last_error = None
+        for model in models:
+            for attempt in range(2):  # 2 попытки на каждую модель
+                try:
+                    chat = self.client.chat.completions.create(
+                        messages=[
+                            {"role": "system", "content": system_prompt},
+                            {"role": "user", "content": f"Код bot.py:\n\n{code}"},
+                        ],
+                        model=model,
+                        temperature=temperature,
+                        max_tokens=3000,
+                    )
+                    result = self._clean(chat.choices[0].message.content)
+                    tokens = chat.usage.total_tokens if hasattr(chat, "usage") else "?"
+                    self.logger.info(f"LLM ответ ({model}): {len(result)} символов, {tokens} токенов")
+                    return result
+                except Exception as e:
+                    last_error = e
+                    error_str = str(e)
+                    if "429" in error_str:
+                        wait = 60  # ждём минуту при рейт-лимите
+                        self.logger.warning(f"Рейт-лимит на {model}, жду {wait} сек")
+                        time.sleep(wait)
+                    elif "404" in error_str:
+                        self.logger.warning(f"Модель {model} недоступна, пробую следующую")
+                        break  # переходим к следующей модели
+                    else:
+                        self.logger.warning(f"Ошибка на {model}: {error_str[:100]}")
+                        time.sleep(10)
+
+        self.logger.error(f"Все модели недоступны. Последняя ошибка: {last_error}")
+        raise last_error
 
     @staticmethod
     def _clean(raw):
