@@ -402,6 +402,9 @@ class DarwinOrchestrator:
         # Формируем список пакетов для requirements.txt
         packages = []
         for lib in sorted(needed):
+            # Пропускаем локальные модули проекта
+            if lib in ['core', 'utils', 'config', 'bot', 'self_fixing_bot']:
+                continue
             packages.append(pypi_names.get(lib, lib))
 
         # Читаем текущий requirements.txt

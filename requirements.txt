@@ -1,7 +1,6 @@
 PyGithub
 aiogram==2.25.1
 aiohttp
-core
 openai
 pyflakes
 python-dotenv
