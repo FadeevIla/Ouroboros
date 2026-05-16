@@ -8,30 +8,12 @@ import aiogram
 from aiogram import Application, Bot
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.types import Update, Message, Poll
-from aiogram.filters import Command, CommandStart, CommandHelp, CommandAbout, CommandStatus, CommandJoke, CommandFact, CommandQuote, CommandWeather, CommandStats, CommandPoll, CommandRemind, CommandInfo
+from aiogram.filters import Command
+from aiogram.dispatcher import Dispatcher
+from aiogram.utils import executor
 
 logger = logging.getLogger(__name__)
 BOT_TOKEN = secrets.environ_map['TELEGRAM_BOT_TOKEN']
-
-class Bot:
-    def __init__(self):
-        self.app = Application()
-        self.storage = MemoryStorage()
-        self.bot = Bot(token=BOT_TOKEN)
-        self.command_set = [
-            CommandStart('start', run=start),
-            CommandHelp('help', run=help_command),
-            CommandAbout('about', run=about),
-            CommandStatus('status', run=status),
-            CommandJoke('joke', run=joke),
-            CommandFact('fact', run=fact),
-            CommandQuote('quote', run=quote),
-            CommandWeather('weather', run=weather),
-            CommandStats('stats', run=stats),
-            CommandPoll('poll', run=poll),
-            CommandRemind('remind', run=remind),
-            CommandInfo('info', run=info),
-        ]
 
 async def start(update: Update, context: Application):
     await update.message.reply_text("Привет, я бот!")
@@ -70,14 +52,19 @@ async def quote(update: Update, context: Application):
     await update.message.reply_text(random.choice(quotes))
 
 async def weather(update: Update, context: Application):
-    city = update.message.text.split(' ')[1]
-    api_key = 'Ваш API ключ'
-    url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}&units=metric'
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        await update.message.reply_text(f'Температура в {city}: {data["main"]["temp"]}°C')
-    else:
+    try:
+        city = update.message.text.split()[1]
+        api_key = secrets.environ_map['OPENWEATHERMAP_API_KEY']
+        url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}'
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            weather_description = data['weather'][0]['description']
+            await update.message.reply_text(f'Погода в {city}: {weather_description}')
+        else:
+            await update.message.reply_text('Ошибка. Проверьте город или ключ от API.')
+    except Exception as e:
+        logger.error(f'Ошибка при получении погоды: {e}')
         await update.message.reply_text('Ошибка. Проверьте город или ключ от API.')
 
 async def stats(update: Update, context: Application):
@@ -93,13 +80,19 @@ async def info(update: Update, context: Application):
     await update.message.reply_text("Это случайное сообщение")
 
 if __name__ == "__main__":
-    import logging
-    from logging import basicConfig
-    basicConfig(level=logging.INFO)
-    import sys
-    from aiogram import Bot, Dispatcher, executor, types
+    logging.basicConfig(level=logging.INFO)
     bot = Bot(BOT_TOKEN)
     dp = Dispatcher(bot, storage=MemoryStorage())
-    dp.setup_middleware(aiogram.BackendMiddleware())
-    dp.include_router(aiogram.Dispatcher(dp, storage=MemoryStorage()))
+    dp.startup.register(start)
+    dp.message_handler(Command("help"), help_command)
+    dp.message_handler(Command("about"), about)
+    dp.message_handler(Command("status"), status)
+    dp.message_handler(Command("joke"), joke)
+    dp.message_handler(Command("fact"), fact)
+    dp.message_handler(Command("quote"), quote)
+    dp.message_handler(Command("weather"), weather)
+    dp.message_handler(Command("stats"), stats)
+    dp.message_handler(Command("poll"), poll)
+    dp.message_handler(Command("remind"), remind)
+    dp.message_handler(Command("info"), info)
     executor.start_polling(dp, skip_updates=True)
