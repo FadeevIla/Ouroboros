@@ -56,32 +56,32 @@ async def weather(update: Update, context: Application):
         city = update.message.text.split()[1]
         api_key = secrets.environ_map['OPENWEATHERMAP_API_KEY']
         url = f'http://api.openweathermap.org/data/2.5/weather?q={city}&appid={api_key}'
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            weather_description = data['weather'][0]['description']
-            await update.message.reply_text(f'Погода в {city}: {weather_description}')
-        else:
-            await update.message.reply_text('Ошибка. Проверьте город или ключ от API.')
+        async with aiohttp.ClientSession() as session:
+            async with session.get(url) as response:
+                if response.status == 200:
+                    data = await response.json()
+                    weather_description = data['weather'][0]['description']
+                    await update.message.reply_text(f'Погода в {city}: {weather_description}')
+                else:
+                    await update.message.reply_text('Ошибка. Проверьте город или ключ от API.')
     except Exception as e:
         logger.error(f'Ошибка при получении погоды: {e}')
         await update.message.reply_text('Ошибка. Проверьте город или ключ от API.')
 
 async def stats(update: Update, context: Application):
-    await update.message.reply_text("Статистика. Это могла бы быть любая информация о статистике.")
+    await update.message.reply_text('Статистика бота.')
 
 async def poll(update: Update, context: Application):
-    await update.message.reply_text("Опрос. Это могла бы быть любая информация об опросе.")
+    await update.message.reply_text('Опрос бота.')
 
 async def remind(update: Update, context: Application):
-    await update.message.reply_text("Напоминание. Встреча на выходных.")
+    await update.message.reply_text('Напоминание бота.')
 
 async def info(update: Update, context: Application):
-    await update.message.reply_text("Это случайное сообщение")
+    await update.message.reply_text('Информация о боте.')
 
 async def whatsnew(update: Update, context: Application):
     news = [
-        'Новая функция бота: теперь можно получать стоимостные сообщения.',
         'Было исправлено несколько ошибок, теперь бот работает более стабильно.',
         'Добавлена поддержка новых языков.'
     ]
