@@ -19,7 +19,7 @@ async def start(update: Update, context: Application):
     await update.message.reply_text("Привет, я бот!")
 
 async def help_command(update: Update, context: Application):
-    await update.message.reply_text('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info')
+    await update.message.reply_text('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info, /whatsnew')
 
 async def about(update: Update, context: Application):
     await update.message.reply_text('Это бот, который может ответить на различные вопросы.')
@@ -68,16 +68,24 @@ async def weather(update: Update, context: Application):
         await update.message.reply_text('Ошибка. Проверьте город или ключ от API.')
 
 async def stats(update: Update, context: Application):
-    await update.message.reply_text("Статистика: пользователей - 100")
+    await update.message.reply_text("Статистика. Это могла бы быть любая информация о статистике.")
 
 async def poll(update: Update, context: Application):
-    await update.message.reply_text("Опрос: как вы относитесь к боту?")
+    await update.message.reply_text("Опрос. Это могла бы быть любая информация об опросе.")
 
 async def remind(update: Update, context: Application):
     await update.message.reply_text("Напоминание. Встреча на выходных.")
 
 async def info(update: Update, context: Application):
     await update.message.reply_text("Это случайное сообщение")
+
+async def whatsnew(update: Update, context: Application):
+    news = [
+        'Новая функция бота: теперь можно получать стоимостные сообщения.',
+        'Было исправлено несколько ошибок, теперь бот работает более стабильно.',
+        'Добавлена поддержка новых языков.'
+    ]
+    await update.message.reply_text(random.choice(news))
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -95,4 +103,5 @@ if __name__ == "__main__":
     dp.message_handler(Command("poll"), poll)
     dp.message_handler(Command("remind"), remind)
     dp.message_handler(Command("info"), info)
+    dp.message_handler(Command("whatsnew"), whatsnew)
     executor.start_polling(dp, skip_updates=True)
