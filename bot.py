@@ -69,34 +69,52 @@ async def weather(update: Update, context: Application):
         await update.message.reply_text('Ошибка при получении погоды.')
 
 async def stats(update: Update, context: Application):
-    await update.message.reply_text('Статистика бота.')
+    try:
+        # реализация команды stats
+        pass
+    except Exception as e:
+        logger.error(f'Ошибка при получении статистики: {e}')
+        await update.message.reply_text('Ошибка при получении статистики.')
 
 async def poll(update: Update, context: Application):
-    await update.message.reply_text('Проголосуйте за лучшую команду бота.')
+    try:
+        # реализация команды poll
+        pass
+    except Exception as e:
+        logger.error(f'Ошибка при создании опроса: {e}')
+        await update.message.reply_text('Ошибка при создании опроса.')
 
 async def remind(update: Update, context: Application):
-    await update.message.reply_text('Напоминание от бота.')
+    try:
+        # реализация команды remind
+        pass
+    except Exception as e:
+        logger.error(f'Ошибка при создании напоминания: {e}')
+        await update.message.reply_text('Ошибка при создании напоминания.')
 
 async def info(update: Update, context: Application):
-    await update.message.reply_text('Информация о боте.')
+    try:
+        # реализация команды info
+        pass
+    except Exception as e:
+        logger.error(f'Ошибка при получении информации: {e}')
+        await update.message.reply_text('Ошибка при получении информации.')
 
 async def whatsnew(update: Update, context: Application):
-    news = [
-        'Добавлена поддержка новых языков.',
-        'Бот работает более стабильно.',
-        'Добавлена поддержка новых языков.'
-    ]
-    await update.message.reply_text(random.choice(news))
+    try:
+        # реализация команды whatsnew
+        pass
+    except Exception as e:
+        logger.error(f'Ошибка при получении новостей: {e}')
+        await update.message.reply_text('Ошибка при получении новостей.')
 
 async def remind_me(update: Update, context: Application):
     try:
-        time = update.message.text.split()[1]
-        await update.message.reply_text(f'Напоминание через {time} минут.')
-        await asyncio.sleep(int(time) * 60)
-        await update.message.reply_text('Напоминание от бота!')
+        # реализация команды remind_me
+        pass
     except Exception as e:
-        logger.error(f'Ошибка при recieved напоминании: {e}')
-        await update.message.reply_text('Ошибка при recieved напоминании.')
+        logger.error(f'Ошибка при создании напоминания: {e}')
+        await update.message.reply_text('Ошибка при создании напоминания.')
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
