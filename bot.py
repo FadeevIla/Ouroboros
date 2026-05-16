@@ -4,11 +4,9 @@ import random
 import logging
 import aiohttp
 import os
-
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.utils import executor
-
 from core import environ_map, update_notifier
 
 logger = logging.getLogger(__name__)
@@ -18,7 +16,7 @@ async def start(message: types.Message):
     await message.reply("Привет, я бот!")
 
 async def help_command(message: types.Message):
-    await message.reply('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info, /whatsnew, /horoscope')
+    await message.reply('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info, /whatsnew, /horoscope, /random')
 
 async def about(message: types.Message):
     await message.reply('Это бот, который может ответить на различные вопросы.')
@@ -72,34 +70,41 @@ async def weather(message: types.Message):
 
 async def stats(message: types.Message):
     commands = [
-        'start', 'help', 'about', 'status', 'joke', 'fact', 'quote', 'weather', 'stats', 'poll', 'remind', 'info', 'whatsnew', 'horoscope'
+        'start', 'help', 'about', 'status', 'joke', 'fact', 'quote', 'weather', 'stats', 'poll', 'remind', 'info', 'whatsnew', 'horoscope', 'random'
     ]
-    await message.reply('Список команд бота.')
+    await message.reply(f'Доступные команды: {", ".join(commands)}')
 
 async def poll(message: types.Message):
-    await message.reply('Это команда для создания опроса.')
+    await message.reply('Функция опроса в разработке.')
 
 async def remind(message: types.Message):
-    await message.reply('Это команда для напоминания.')
+    await message.reply('Функция напоминаний в разработке.')
 
 async def info(message: types.Message):
-    await message.reply('Это команда для получения информации.')
+    await message.reply('Функция информации в разработке.')
 
 async def whatsnew(message: types.Message):
-    await message.reply('Это команда для получения новостей.')
+    await message.reply('Функция "что нового" в разработке.')
 
 async def remind_me(message: types.Message):
-    await message.reply('Это команда для напоминания мне.')
+    await message.reply('Функция напоминаний в разработке.')
 
 async def horoscope(message: types.Message):
-    await message.reply('Это команда для получения гороскопа.')
+    await message.reply('Функция гороскопа в разработке.')
 
-async def poll_command(message: types.Message):
-    await message.reply('Это команда для создания опроса.')
+async def random_command(message: types.Message):
+    try:
+        min_val, max_val = map(int, message.text.split()[1:])
+        random_number = secrets.randbelow(max_val - min_val + 1) + min_val
+        await message.reply(f'Случайное число от {min_val} до {max_val}: {random_number}')
+    except Exception as e:
+        logger.error(f'Ошибка при генерации случайного числа: {e}')
+        await message.reply('Ошибка при генерации случайного числа.')
 
-logging.basicConfig(level=logging.INFO)
-bot = Bot(BOT_TOKEN)
-dp = Dispatcher(bot, storage=MemoryStorage())
+bot = Bot(token=BOT_TOKEN)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
+
 dp.register_message_handler(start, commands=['start'])
 dp.register_message_handler(help_command, commands=['help'])
 dp.register_message_handler(about, commands=['about'])
@@ -115,4 +120,5 @@ dp.register_message_handler(info, commands=['info'])
 dp.register_message_handler(whatsnew, commands=['whatsnew'])
 dp.register_message_handler(remind_me, commands=['remindme'])
 dp.register_message_handler(horoscope, commands=['horoscope'])
+dp.register_message_handler(random_command, commands=['random'])
 executor.start_polling(dp)
