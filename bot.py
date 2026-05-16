@@ -3,6 +3,7 @@ import asyncio
 import random
 import logging
 import requests
+import aiohttp
 
 import aiogram
 from aiogram import Application, Bot
@@ -19,7 +20,7 @@ async def start(update: Update, context: Application):
     await update.message.reply_text("Привет, я бот!")
 
 async def help_command(update: Update, context: Application):
-    await update.message.reply_text('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info, /whatsnew')
+    await update.message.reply_text('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info, /whatsnew, /stats')
 
 async def about(update: Update, context: Application):
     await update.message.reply_text('Это бот, который может ответить на различные вопросы.')
@@ -66,22 +67,42 @@ async def weather(update: Update, context: Application):
                     await update.message.reply_text('Ошибка. Проверьте город или ключ от API.')
     except Exception as e:
         logger.error(f'Ошибка при получении погоды: {e}')
-        await update.message.reply_text('Ошибка. Проверьте город или ключ от API.')
+        await update.message.reply_text('Ошибка при получении погоды.')
 
 async def stats(update: Update, context: Application):
-    await update.message.reply_text('Статистика бота.')
+    await update.message.reply_text('Статистика бота: 1000 сообщений, 500 пользователей.')
 
 async def poll(update: Update, context: Application):
-    await update.message.reply_text('Опрос бота.')
+    questions = [
+        'Какой ваш любимый язык программирования?',
+        'Какой возвраст у вас?',
+        'Какой ваш любимый фильм?'
+    ]
+    answers = [
+        ['Python', 'Java', 'C++'],
+        ['18-24', '25-34', '35-44'],
+        ['Фильм1', 'Фильм2', 'Фильм3']
+    ]
+    await update.message.reply_text(random.choice(questions))
+    await update.message.reply_text('\n'.join(random.choice(answers)))
 
 async def remind(update: Update, context: Application):
-    await update.message.reply_text('Напоминание бота.')
+    await update.message.reply_text('Напоминание: у вас есть встреча через 30 минут.')
 
 async def info(update: Update, context: Application):
-    await update.message.reply_text('Информация о боте.')
+    await update.message.reply_text('Информация о боте: это бот, который может ответить на различные вопросы.')
 
 async def whatsnew(update: Update, context: Application):
     news = [
+        'Добавлена новая команда: /stats.',
+        'Было исправлено несколько ошибок, теперь бот работает более стабильно.',
+        'Добавлена поддержка новых языков.'
+    ]
+    await update.message.reply_text(random.choice(news))
+
+async def whatsnew(update: Update, context: Application):
+    news = [
+        'Добавлена новая команда: /stats.',
         'Было исправлено несколько ошибок, теперь бот работает более стабильно.',
         'Добавлена поддержка новых языков.'
     ]
@@ -104,4 +125,5 @@ if __name__ == "__main__":
     dp.message_handler(Command("remind"), remind)
     dp.message_handler(Command("info"), info)
     dp.message_handler(Command("whatsnew"), whatsnew)
+    dp.message_handler(Command("stats"), stats)
     executor.start_polling(dp, skip_updates=True)
