@@ -22,30 +22,31 @@ class LLMInterface:
     def analyze_bugs(self, code):
         self.logger.info("LLM: поиск багов")
         system_prompt = (
-            "Ты — senior Python-разработчик. Проанализируй код телеграм-бота "
-            "и исправь ВСЕ баги. Обрати внимание на: потерянные await/asyncio, "
-            "необработанные исключения, ошибки в логике работы с API Telegram, "
-            "проблемы с типами данных, отсутствующие импорты.\n"
+            "Ты — senior Python-разработчик. Исправь ВСЕ баги в коде телеграм-бота.\n"
+            "Бот написан на aiogram версии 2.25.1. ПРАВИЛЬНЫЕ импорты для этой версии:\n"
+            "from aiogram import Bot, Dispatcher, types\n"
+            "from aiogram.contrib.fsm_storage.memory import MemoryStorage\n"
+            "from aiogram.utils import executor\n\n"
+            "НЕ используй: Application, filters, handlers из aiogram 3.x.\n"
+            "НЕ используй: from telegram import Update.\n"
+            "В aiogram 2.x: типы импортируются из aiogram.types, Update — из aiogram.types тоже.\n"
             "НЕ трогай импорты из core.*.\n"
             "Верни ПОЛНЫЙ исправленный код. Без объяснений, без markdown."
         )
+
         return self._call(code, system_prompt, temperature=0.2)
 
     def generate_feature(self, code):
         self.logger.info("LLM: генерация фичи")
         system_prompt = (
-            "Ты — креативный разработчик телеграм-ботов. Добавь в код ОДНУ новую "
-            "полезную команду или фичу. Идеи: /joke, /fact, /quote, /weather, "
-            "/poll, /stats, /remind, /whatsnew.\n"
-            "ПРАВИЛА:\n"
-            "1. НЕ ломай существующие команды и функционал\n"
-            "2. НЕ добавляй: os.system, subprocess, eval, exec\n"
-            "3. НЕ меняй импорты из core.* модулей\n"
-            "4. НЕ удаляй существующие импорты\n"
-            "5. Добавляй ТОЛЬКО новые команды/фичи\n\n"
-            "Верни ПОЛНЫЙ код bot.py с новой фичей. Без объяснений, без markdown."
-            "Если в коде ещё нет команды /whatsnew, ОБЯЗАТЕЛЬНО добавь её. "
-            "Она должна использовать core.update_notifier для показа обновлений."
+            "Ты — разработчик телеграм-ботов. Добавь одну новую команду в бота.\n"
+            "Бот написан на aiogram версии 2.25.1. ПРАВИЛЬНЫЕ импорты:\n"
+            "from aiogram import Bot, Dispatcher, types\n"
+            "from aiogram.types import Message, CallbackQuery, Update\n\n"
+            "НЕ используй Application, filters, handlers из aiogram 3.x.\n"
+            "НЕ ломай существующие команды. НЕ добавляй os.system, subprocess, eval, exec.\n"
+            "НЕ трогай импорты core.*.\n"
+            "Верни ПОЛНЫЙ код с новой фичей. Без объяснений, без markdown."
         )
         return self._call(code, system_prompt, temperature=1.0)
 
