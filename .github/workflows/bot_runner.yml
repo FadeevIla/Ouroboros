@@ -28,7 +28,7 @@ jobs:
           python-version: '3.11'
 
       - name: Установка зависимостей
-        run: pip install PyGithub openai pyflakes requests python-dotenv aiohttp
+        run: pip install PyGithub openai pyflakes requests python-dotenv aiohttp aiogram==2.25.1
 
       - name: Запуск Дарвина
         env:
