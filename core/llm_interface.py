@@ -23,14 +23,15 @@ class LLMInterface:
         self.logger.info("LLM: поиск багов")
         system_prompt = (
             "Ты — senior Python-разработчик. Исправь ВСЕ баги в коде телеграм-бота.\n"
-            "Бот написан на aiogram версии 2.25.1. ПРАВИЛЬНЫЕ импорты для этой версии:\n"
-            "from aiogram import Bot, Dispatcher, types\n"
-            "from aiogram.contrib.fsm_storage.memory import MemoryStorage\n"
-            "from aiogram.utils import executor\n\n"
-            "НЕ используй: Application, filters, handlers из aiogram 3.x.\n"
-            "НЕ используй: from telegram import Update.\n"
-            "В aiogram 2.x: типы импортируются из aiogram.types, Update — из aiogram.types тоже.\n"
+            "Бот написан на aiogram версии 2.25.1.\n\n"
+            "ВАЖНЫЕ ПРАВИЛА aiogram 2.x:\n"
+            "- У сообщений НЕТ метода reply_text. Используй message.reply() или message.answer()\n"
+            "- Импорты: from aiogram import Bot, Dispatcher, types\n"
+            "- Типы: from aiogram.types import Message, CallbackQuery\n"
+            "- НЕ используй Update из aiogram.types (его нет в aiogram 2.x)\n"
+            "- Используй message.reply(), НЕ message.reply_text()\n\n"
             "НЕ трогай импорты из core.*.\n"
+            "НЕ удаляй строку from core import environ_map — она нужна.\n"
             "Верни ПОЛНЫЙ исправленный код. Без объяснений, без markdown."
         )
 
