@@ -14,16 +14,16 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN = environ_map['TELEGRAM_BOT_TOKEN']
 
 async def start(message: types.Message):
-    await message.reply_text("Привет, я бот!")
+    await message.reply("Привет, я бот!")
 
 async def help_command(message: types.Message):
-    await message.reply_text('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info, /whatsnew, /stats')
+    await message.reply('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info, /whatsnew, /stats')
 
 async def about(message: types.Message):
-    await message.reply_text('Это бот, который может ответить на различные вопросы.')
+    await message.reply('Это бот, который может ответить на различные вопросы.')
 
 async def status(message: types.Message):
-    await message.reply_text('Бот работает!')
+    await message.reply('Бот работает!')
 
 async def joke(message: types.Message):
     jokes = [
@@ -31,7 +31,7 @@ async def joke(message: types.Message):
         'Почему программист не любит воду? Потому что он боится "отплывать"!',
         'Почему компьютер не может ходить в кино? Потому что он не может купить билет!'
     ]
-    await message.reply_text(random.choice(jokes))
+    await message.reply(random.choice(jokes))
 
 async def fact(message: types.Message):
     facts = [
@@ -39,7 +39,7 @@ async def fact(message: types.Message):
         'Самая большая планета в наше солнечной системы - Юпитер.',
         'Самая дальняя планета от Солнца - Плутон.'
     ]
-    await message.reply_text(random.choice(facts))
+    await message.reply(random.choice(facts))
 
 async def quote(message: types.Message):
     quotes = [
@@ -47,7 +47,7 @@ async def quote(message: types.Message):
         'Никогда не сдавайтесь, потому что победа всегда впереди.',
         'Всегда следуйте своему сердцу, потому что оно знает, что правильно.'
     ]
-    await message.reply_text(random.choice(quotes))
+    await message.reply(random.choice(quotes))
 
 async def weather(message: types.Message):
     try:
@@ -59,52 +59,46 @@ async def weather(message: types.Message):
                 if response.status == 200:
                     data = await response.json()
                     weather_description = data['weather'][0]['description']
-                    await message.reply_text(f'Погода в {city}: {weather_description}')
+                    await message.reply(f'Погода в {city}: {weather_description}')
                 else:
-                    await message.reply_text('Ошибка. Проверьте город или ключ от API.')
+                    await message.reply('Ошибка. Проверьте город или ключ от API.')
     except Exception as e:
         logger.error(f'Ошибка при получении погоды: {e}')
-        await message.reply_text('Ошибка при получении погоды.')
+        await message.reply('Ошибка при получении погоды.')
 
 async def stats(message: types.Message):
-    await message.reply_text('Статистика бота.')
+    await message.reply('Статистика бота.')
 
 async def poll(message: types.Message):
-    await message.reply_text('Опрос бота.')
+    await message.reply('Опрос бота.')
 
 async def remind(message: types.Message):
-    await message.reply_text('Напоминание бота.')
+    await message.reply('Напоминание бота.')
 
 async def info(message: types.Message):
-    await message.reply_text('Информация о боте.')
+    await message.reply('Информация о боте.')
 
 async def whatsnew(message: types.Message):
-    await message.reply_text('Новости бота.')
+    await message.reply('Что нового в боте.')
 
 async def remind_me(message: types.Message):
-    try:
-        # код напоминания
-        await message.reply_text('Напоминание создано.')
-    except Exception as e:
-        logger.error(f'Ошибка при создании напоминания: {e}')
-        await message.reply_text('Ошибка при создании напоминания.')
+    await message.reply('Напоминание для вас.')
 
-if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
-    bot = Bot(BOT_TOKEN)
-    dp = Dispatcher(bot, storage=MemoryStorage())
-    dp.register_message_handler(start, commands=['start'])
-    dp.register_message_handler(help_command, commands=['help'])
-    dp.register_message_handler(about, commands=['about'])
-    dp.register_message_handler(status, commands=['status'])
-    dp.register_message_handler(joke, commands=['joke'])
-    dp.register_message_handler(fact, commands=['fact'])
-    dp.register_message_handler(quote, commands=['quote'])
-    dp.register_message_handler(weather, commands=['weather'])
-    dp.register_message_handler(stats, commands=['stats'])
-    dp.register_message_handler(poll, commands=['poll'])
-    dp.register_message_handler(remind, commands=['remind'])
-    dp.register_message_handler(info, commands=['info'])
-    dp.register_message_handler(whatsnew, commands=['whatsnew'])
-    dp.register_message_handler(remind_me, commands=['remindme'])
-    executor.start_polling(dp, skip_updates=True)
+logging.basicConfig(level=logging.INFO)
+bot = Bot(BOT_TOKEN)
+dp = Dispatcher(bot, storage=MemoryStorage())
+dp.register_message_handler(start, commands=['start'])
+dp.register_message_handler(help_command, commands=['help'])
+dp.register_message_handler(about, commands=['about'])
+dp.register_message_handler(status, commands=['status'])
+dp.register_message_handler(joke, commands=['joke'])
+dp.register_message_handler(fact, commands=['fact'])
+dp.register_message_handler(quote, commands=['quote'])
+dp.register_message_handler(weather, commands=['weather'])
+dp.register_message_handler(stats, commands=['stats'])
+dp.register_message_handler(poll, commands=['poll'])
+dp.register_message_handler(remind, commands=['remind'])
+dp.register_message_handler(info, commands=['info'])
+dp.register_message_handler(whatsnew, commands=['whatsnew'])
+dp.register_message_handler(remind_me, commands=['remindme'])
+executor.start_polling(dp, skip_updates=True)
