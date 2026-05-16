@@ -13,6 +13,10 @@ from datetime import datetime, timedelta
 logger = logging.getLogger(__name__)
 BOT_TOKEN = environ_map['TELEGRAM_BOT_TOKEN']
 
+bot = Bot(token=BOT_TOKEN)
+storage = MemoryStorage()
+dp = Dispatcher(bot, storage=storage)
+
 async def start(message: types.Message):
     await message.reply("Привет, я бот!")
 
@@ -67,54 +71,31 @@ async def weather(message: types.Message):
                     await message.reply('Ошибка. Проверьте город или ключ от API.')
     except Exception as e:
         logger.error(f'Ошибка при получении погоды: {e}')
-        await message.reply('Ошибка при получении погоды.')
+        await message.reply('Ошибка при получении погоды')
 
 async def stats(message: types.Message):
-    commands = [
-        'start', 'help', 'about', 'status', 'joke', 'fact', 'quote', 'weather', 'stats', 'poll', 'remind', 'info', 'whatsnew', 'horoscope', 'random', 'timer'
-    ]
-    await message.reply(f'Список команд: {", ".join(commands)}')
+    await message.reply('Пока нет реализации')
 
 async def poll(message: types.Message):
-    # недостающий код для обработки опроса
-    await message.reply('Опрос не доступен')
+    await message.reply('Пока нет реализации')
 
 async def remind(message: types.Message):
-    # недостающий код для обработки напоминания
-    await message.reply('Напоминание не доступно')
+    await message.reply('Пока нет реализации')
 
 async def info(message: types.Message):
-    # недостающий код для обработки информации
-    await message.reply('Информация не доступна')
+    await message.reply('Пока нет реализации')
 
 async def whatsnew(message: types.Message):
-    # недостающий код для обработки новостей
-    await message.reply('Новости не доступны')
-
-async def remind_me(message: types.Message):
-    # недостающий код для обработки напоминания
-    await message.reply('Напоминание не доступно')
+    await message.reply('Пока нет реализации')
 
 async def horoscope(message: types.Message):
-    # недостающий код для обработки гороскопа
-    await message.reply('Гороскоп не доступен')
+    await message.reply('Пока нет реализации')
 
 async def random_command(message: types.Message):
-    await message.reply(str(random.randint(0, 100)))
+    await message.reply('Пока нет реализации')
 
 async def timer(message: types.Message):
-    try:
-        time = int(message.text.split()[1])
-        await message.reply(f'Таймер установлен на {time} минут')
-        await asyncio.sleep(time * 60)
-        await message.reply('Таймер сработал!')
-    except Exception as e:
-        logger.error(f'Ошибка при установке таймера: {e}')
-        await message.reply('Ошибка при установке таймера')
-
-bot = Bot(token=BOT_TOKEN, parse_mode=types.ParseMode.HTML)
-storage = MemoryStorage()
-dp = Dispatcher(bot, storage=storage)
+    await message.reply('Пока нет реализации')
 
 dp.register_message_handler(start, commands=['start'])
 dp.register_message_handler(help_command, commands=['help'])
@@ -129,7 +110,6 @@ dp.register_message_handler(poll, commands=['poll'])
 dp.register_message_handler(remind, commands=['remind'])
 dp.register_message_handler(info, commands=['info'])
 dp.register_message_handler(whatsnew, commands=['whatsnew'])
-dp.register_message_handler(remind_me, commands=['remindme'])
 dp.register_message_handler(horoscope, commands=['horoscope'])
 dp.register_message_handler(random_command, commands=['random'])
 dp.register_message_handler(timer, commands=['timer'])
