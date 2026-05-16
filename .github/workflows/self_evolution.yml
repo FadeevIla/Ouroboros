@@ -23,7 +23,9 @@ jobs:
           python-version: '3.11'
 
       - name: Установка зависимостей
-        run: pip install PyGithub openai pyflakes requests python-dotenv aiohttp aiogram==2.25.1
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt --force-reinstall
 
       - name: Запуск цикла эволюции
         env:
