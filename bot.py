@@ -17,7 +17,7 @@ async def start(message: types.Message):
     await message.reply("Привет, я бот!")
 
 async def help_command(message: types.Message):
-    await message.reply('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info, /whatsnew, /stats')
+    await message.reply('Список команд: /start, /help, /about, /status, /joke, /fact, /quote, /weather, /stats, /poll, /remind, /info, /whatsnew, /stats, /horoscope')
 
 async def about(message: types.Message):
     await message.reply('Это бот, который может ответить на различные вопросы.')
@@ -84,6 +84,27 @@ async def whatsnew(message: types.Message):
 async def remind_me(message: types.Message):
     await message.reply('Напоминание для вас.')
 
+async def horoscope(message: types.Message):
+    signs = {
+        'aries': 'Овен',
+        'taurus': 'Телец',
+        'gemini': 'Близнецы',
+        'cancer': 'Рак',
+        'leo': 'Лев',
+        'virgo': 'Дева',
+        'libra': 'Весы',
+        'scorpio': 'Скорпион',
+        'sagittarius': 'Стрелец',
+        'capricorn': 'Козерог',
+        'aquarius': 'Водолей',
+        'pisces': 'Рыбы'
+    }
+    sign = message.text.split()[1].lower()
+    if sign in signs:
+        await message.reply(f'Гороскоп для {signs[sign]}')
+    else:
+        await message.reply('Неправильный знак зодиака')
+
 logging.basicConfig(level=logging.INFO)
 bot = Bot(BOT_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
@@ -101,4 +122,5 @@ dp.register_message_handler(remind, commands=['remind'])
 dp.register_message_handler(info, commands=['info'])
 dp.register_message_handler(whatsnew, commands=['whatsnew'])
 dp.register_message_handler(remind_me, commands=['remindme'])
+dp.register_message_handler(horoscope, commands=['horoscope'])
 executor.start_polling(dp, skip_updates=True)
