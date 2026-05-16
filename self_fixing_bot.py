@@ -222,17 +222,15 @@ class DarwinOrchestrator:
                         self.memory.add_commit(commit_sha, "Auto-fix")
                         stats["bugs_fixed"] = True
 
-                    if valid:
-                        commit_msg = "🤖 Auto-fix: нейросеть исправила баги"
-                        commit_sha = self.github.push(validated_code, sha, commit_msg)
-                        self.memory.add_feature(validated_code, "fix")
-                        self.memory.add_commit(commit_sha, "Auto-fix")
-                        stats["bugs_fixed"] = True
-
                         # Генерируем описание исправления
                         description = self._describe_changes(code, validated_code)
                         self._save_update_description(description, commit_sha)
                         self.notifier.send(f"🐛 {description}", "fix")
+
+                        # Синхронизируем зависимости
+                        deps_updated, new_reqs = self._sync_dependencies(validated_code)
+                        if deps_updated:
+                            self._push_requirements(new_reqs)
 
                         code, sha = validated_code, commit_sha
                     else:
@@ -277,7 +275,12 @@ class DarwinOrchestrator:
                             # Генерируем описание новой фичи
                             description = self._describe_changes(code, validated_code)
                             self._save_update_description(description, commit_sha)
-                            self.notifier.send(f"✨ {description}", "feature")  # ← ВОТ ЭТУ СТРОКУ
+                            self.notifier.send(f"✨ {description}", "feature")
+
+                            # Синхронизируем зависимости
+                            deps_updated, new_reqs = self._sync_dependencies(validated_code)
+                            if deps_updated:
+                                self._push_requirements(new_reqs)
 
                             code, sha = validated_code, commit_sha
                         else:
@@ -293,8 +296,7 @@ class DarwinOrchestrator:
         duration = (datetime.now(timezone.utc) - cycle_start).total_seconds()
         self.logger.info("=" * 60)
         self.logger.info(f"ЦИКЛ ЗАВЕРШЁН: {duration:.1f} сек")
-        self.logger.info(
-            f"Баги: {stats['bugs_fixed']} | Фичи: {stats['feature_added']} | Ошибки: {len(stats['errors'])}")
+        self.logger.info(f"Баги: {stats['bugs_fixed']} | Фичи: {stats['feature_added']} | Ошибки: {len(stats['errors'])}")
         self.logger.info("=" * 60)
 
         summary = [
@@ -309,6 +311,122 @@ class DarwinOrchestrator:
         self.notifier.send("\n".join(summary), level)
 
         return len(stats["errors"]) == 0
+
+    def _push_requirements(self, content: str):
+        """Пушит обновлённый requirements.txt в репозиторий."""
+        try:
+            blob = self.github.repo.create_git_blob(content, "utf-8")
+            ref = self.github.repo.get_git_ref("heads/main")
+            base_commit = self.github.repo.get_git_commit(ref.object.sha)
+            element = InputGitTreeElement(
+                path="requirements.txt",
+                mode='100644',
+                type='blob',
+                sha=blob.sha
+            )
+            new_tree = self.github.repo.create_git_tree([element], base_commit.tree)
+            new_commit = self.github.repo.create_git_commit(
+                message="📦 Автообновление зависимостей",
+                tree=new_tree,
+                parents=[base_commit]
+            )
+            ref.edit(sha=new_commit.sha)
+            self.logger.info("📦 requirements.txt обновлён и запушен")
+        except Exception as e:
+            self.logger.warning(f"Не удалось запушить requirements.txt: {e}")
+
+    def _sync_dependencies(self, code: str):
+        """Анализирует импорты в коде и обновляет requirements.txt при необходимости."""
+        import re
+        import ast
+
+        # Библиотеки, которые гарантированно установлены (стандартная библиотека Python)
+        std_libs = {
+            'os', 'sys', 'time', 'json', 're', 'random', 'asyncio', 'logging',
+            'pathlib', 'datetime', 'traceback', 'tempfile', 'hashlib', 'base64',
+            'subprocess', 'secrets', 'importlib', 'typing', 'io', 'collections',
+            'functools', 'itertools', 'math', 'string', 'textwrap', 'urllib',
+        }
+
+        # Библиотеки, которые мы точно знаем, что нужны (ядро)
+        always_needed = {
+            'PyGithub', 'openai', 'pyflakes', 'requests', 'python-dotenv',
+        }
+
+        # Извлекаем импорты из кода
+        imports = set()
+        for line in code.split('\n'):
+            line = line.strip()
+            # import xxx
+            if line.startswith('import '):
+                parts = line.replace('import ', '').split(',')
+                for part in parts:
+                    lib = part.strip().split('.')[0].split(' as ')[0].strip()
+                    imports.add(lib)
+            # from xxx import yyy
+            elif line.startswith('from '):
+                lib = line.split(' ')[1].split('.')[0].strip()
+                imports.add(lib)
+
+        # Определяем, какие библиотеки нужно установить
+        # Это эвристика: библиотека не из std_libs → её нужно устанавливать
+        needed = set()
+        for lib in imports:
+            if lib not in std_libs:
+                needed.add(lib)
+
+        # Добавляем всегда нужные
+        needed = needed | always_needed
+
+        # Сопоставление имён импортов с именами пакетов в PyPI
+        pypi_names = {
+            'telegram': 'python-telegram-bot',
+            'aiogram': 'aiogram==2.25.1',
+            'aiohttp': 'aiohttp',
+            'dotenv': 'python-dotenv',
+            'github': 'PyGithub',
+            'groq': 'groq',
+            'PIL': 'Pillow',
+            'yaml': 'PyYAML',
+            'bs4': 'beautifulsoup4',
+            'sklearn': 'scikit-learn',
+            'cv2': 'opencv-python',
+            'numpy': 'numpy',
+            'pandas': 'pandas',
+            'flask': 'flask',
+            'django': 'django',
+            'fastapi': 'fastapi',
+            'uvicorn': 'uvicorn',
+        }
+
+        # Формируем список пакетов для requirements.txt
+        packages = []
+        for lib in sorted(needed):
+            packages.append(pypi_names.get(lib, lib))
+
+        # Читаем текущий requirements.txt
+        try:
+            with open('requirements.txt', 'r') as f:
+                current = set(line.strip().split('==')[0].split('>=')[0] for line in f if line.strip())
+        except FileNotFoundError:
+            current = set()
+
+        # Проверяем, есть ли новые
+        current_pkg_names = set()
+        for pkg in packages:
+            current_pkg_names.add(pkg.split('==')[0].split('>=')[0])
+
+        if current_pkg_names - current:
+            # Есть новые зависимости — обновляем requirements.txt
+            new_content = '\n'.join(sorted(packages)) + '\n'
+            with open('requirements.txt', 'w') as f:
+                f.write(new_content)
+
+            self.logger.info(f"📦 Обнаружены новые зависимости: {current_pkg_names - current}")
+            return True, new_content
+        else:
+            self.logger.info("📦 Зависимости актуальны")
+            return False, None
 
     def start(self):
         """Запуск бесконечного цикла."""
