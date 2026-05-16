@@ -66,28 +66,37 @@ async def weather(update: Update, context: Application):
                     await update.message.reply_text('Ошибка. Проверьте город или ключ от API.')
     except Exception as e:
         logger.error(f'Ошибка при получении погоды: {e}')
-        await update.message.reply_text('Произошла ошибка при получении погоды.')
+        await update.message.reply_text('Ошибка при получении погоды.')
 
 async def stats(update: Update, context: Application):
     await update.message.reply_text('Статистика бота.')
 
 async def poll(update: Update, context: Application):
-    await update.message.reply_text('Опрос бота.')
+    await update.message.reply_text('Проголосуйте за лучшую команду бота.')
 
 async def remind(update: Update, context: Application):
-    await update.message.reply_text('Напоминание бота.')
+    await update.message.reply_text('Напоминание от бота.')
 
 async def info(update: Update, context: Application):
     await update.message.reply_text('Информация о боте.')
 
 async def whatsnew(update: Update, context: Application):
     news = [
-        'Добавлена новая команда /start.',
         'Добавлена поддержка новых языков.',
         'Бот работает более стабильно.',
         'Добавлена поддержка новых языков.'
     ]
     await update.message.reply_text(random.choice(news))
+
+async def remind_me(update: Update, context: Application):
+    try:
+        time = update.message.text.split()[1]
+        await update.message.reply_text(f'Напоминание через {time} минут.')
+        await asyncio.sleep(int(time) * 60)
+        await update.message.reply_text('Напоминание от бота!')
+    except Exception as e:
+        logger.error(f'Ошибка при recieved напоминании: {e}')
+        await update.message.reply_text('Ошибка при recieved напоминании.')
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
@@ -106,4 +115,5 @@ if __name__ == "__main__":
     dp.message_handler(Command("remind"), remind)
     dp.message_handler(Command("info"), info)
     dp.message_handler(Command("whatsnew"), whatsnew)
+    dp.message_handler(Command("remindme"), remind_me)
     executor.start_polling(dp, skip_updates=True)
