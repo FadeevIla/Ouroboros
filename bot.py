@@ -8,6 +8,8 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.utils import executor
 from datetime import datetime, timedelta
+from core.feedback import add_feedback
+
 
 logger = logging.getLogger(__name__)
 BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
@@ -22,6 +24,15 @@ async def start(message: types.Message):
     if message.chat.id not in player_state:
         player_state[message.chat.id] = {'health': 100, 'inventory': [], 'level': 1, 'experience': 0, 'paradox': 0}
     await message.reply("Привет, я бот!")
+
+async def report_cmd(message, state=None):
+    """Принимает баги и пожелания."""
+    text = message.text.replace("/report", "").strip()
+    if not text:
+        await message.reply("Напиши: /report твой баг или пожелание")
+        return
+    add_feedback(text, "admin")
+    await message.reply("📝 Записал! Учту в следующем обновлении.")
 
 async def help_command(message: types.Message):
     await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest')
@@ -129,6 +140,7 @@ dp.register_message_handler(inventory, commands=['inventory'])
 dp.register_message_handler(level, commands=['level'])
 dp.register_message_handler(paradox, commands=['paradox'])
 dp.register_message_handler(quest, commands=['quest'])
+dp.register_message_handler(report_cmd, commands=['report'])
 
 if __name__ == '__main__':
     executor.start_polling(dp)
