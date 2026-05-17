@@ -21,6 +21,8 @@ class LLMInterface:
 
     def analyze_bugs(self, code):
         self.logger.info("LLM: поиск багов")
+        from core.feedback import get_feedback_summary, clear_feedback
+        feedback = get_feedback_summary()
         system_prompt = (
             "Ты — senior Python-разработчик. Оптимизируй код текстовой RPG "
             "'Хроники разлома' на aiogram 2.25.1.\n\n"
@@ -36,6 +38,8 @@ class LLMInterface:
             "7. НЕ ломай оставшиеся команды.\n"
             "8. Первая строка ответа — import. Без пояснений, без markdown."
             "9. Не оборачивай код в ``` или ```python."
+            f"\n\nПОЖЕЛАНИЯ ПОЛЬЗОВАТЕЛЕЙ (учти их при оптимизации):\n{feedback}\n\n"
+            "После обработки пожеланий удали их через core.feedback.clear_feedback()."
         )
         return self._call(code, system_prompt, temperature=0.2)
 
@@ -60,6 +64,9 @@ class LLMInterface:
             "- Убирай Update, Application, filters из импортов\n"
             "- Первая строка ответа — import. Без пояснений, без markdown."
             "- Не оборачивай код в ``` или ```python."
+            "ДОБАВЬ команду /report для приёма багов и пожеланий от админа.\n"
+            "Команда должна сохранять сообщение через core.feedback.add_feedback().\n"
+            "Только админ (chat_id=ТВОЙ_CHAT_ID) может использовать эту команду.\n"
         )
         return self._call(code, system_prompt, temperature=1.0)
 
