@@ -20,28 +20,36 @@ player_state = {}
 
 async def start(message: types.Message):
     if message.chat.id not in player_state:
-        player_state[message.chat.id] = {'health': 100, 'inventory': []}
+        player_state[message.chat.id] = {'health': 100, 'inventory': [], 'level': 1, 'experience': 0}
     await message.reply("Привет, я бот!")
 
 async def help_command(message: types.Message):
-    await message.reply('Список команд: /start, /help, /fight, /travel')
+    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level')
 
 async def fight(message: types.Message):
+    if message.chat.id not in player_state:
+        await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
+        return
     player_health = player_state[message.chat.id]['health']
     enemy_health = 100
     while player_health > 0 and enemy_health > 0:
         await message.reply(f'Ваше здоровье: {player_health}, Здоровье врага: {enemy_health}')
-        action = await message.reply('Что вы хотите сделать? 1 - атаковать, 2 - защититься')
-        if action.text == '1':
+        action = (await message.reply('Что вы хотите сделать? 1 - атаковать, 2 - защититься')).text
+        if action == '1':
             enemy_health -= 20
             player_health -= 10
-        elif action.text == '2':
+        elif action == '2':
             player_health += 10
         else:
             await message.reply('Недопустимое действие')
             break
     if player_health > 0:
         await message.reply('Вы победили!')
+        player_state[message.chat.id]['experience'] += 100
+        if player_state[message.chat.id]['experience'] >= 1000:
+            player_state[message.chat.id]['level'] += 1
+            player_state[message.chat.id]['experience'] = 0
+            await message.reply(f'Вы повысили уровень до {player_state[message.chat.id]["level"]}')
     else:
         await message.reply('Вы проиграли!')
 
@@ -58,10 +66,10 @@ async def travel(message: types.Message):
         await message.reply('Вы встретили знаменитую личность!')
     elif event == 'Нападение дикого зверя':
         await message.reply('На вас напал дикой зверь! Что вы делаете? 1 - атаковать, 2 - убежать')
-        action = await message.reply('Выберите действие:')
-        if action.text == '1':
+        action = (await message.reply('Выберите действие:')).text
+        if action == '1':
             await message.reply('Вы победили зверя!')
-        elif action.text == '2':
+        elif action == '2':
             await message.reply('Вы убежали!')
     elif event == 'Найденная реликвия':
         relic = random.choice(['Священный Грааль', 'Золотой идол', 'Древний свиток'])
@@ -69,10 +77,24 @@ async def travel(message: types.Message):
         player_state[message.chat.id]['inventory'].append(relic)
         await message.reply(f'Ваш инвентарь: {player_state[message.chat.id]["inventory"]}')
 
+async def inventory(message: types.Message):
+    if message.chat.id not in player_state:
+        await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
+        return
+    await message.reply(f'Ваш инвентарь: {player_state[message.chat.id]["inventory"]}')
+
+async def level(message: types.Message):
+    if message.chat.id not in player_state:
+        await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
+        return
+    await message.reply(f'Ваш уровень: {player_state[message.chat.id]["level"]}')
+
 dp.register_message_handler(start, commands=['start'])
 dp.register_message_handler(help_command, commands=['help'])
 dp.register_message_handler(fight, commands=['fight'])
 dp.register_message_handler(travel, commands=['travel'])
+dp.register_message_handler(inventory, commands=['inventory'])
+dp.register_message_handler(level, commands=['level'])
 
 if __name__ == '__main__':
     executor.start_polling(dp)
