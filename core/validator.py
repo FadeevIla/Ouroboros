@@ -91,30 +91,22 @@ class Validator:
         return False, code, "Исчерпаны попытки"
 
     def _llm_fix(self, code, error, fix_type):
-        """Пытается исправить ошибку локально, без LLM."""
+        """Локальное исправление ошибок."""
         import re
-        import time
 
-        # Если ошибка синтаксиса — пробуем простые автозамены
         if fix_type == "syntax":
-            # Убираем reply_text → reply
             code = re.sub(r'\.reply_text\(', '.reply(', code)
-            # Убираем Update из импортов aiogram 3.x
             code = re.sub(r'from aiogram\.types import.*Update,?\s*', '', code)
             code = re.sub(r',\s*Update', '', code)
-            # Убираем Application
             code = re.sub(r'from aiogram import.*Application,?\s*', '', code)
             code = re.sub(r',\s*Application', '', code)
-            # Убираем skip_updates=True
             code = re.sub(r'skip_updates\s*=\s*True', '', code)
-            # Исправляем executor.start_polling
             code = re.sub(r'executor\.start_polling\(dp,\s*\)', 'executor.start_polling(dp)', code)
-            code = re.sub(r'executor\.start_polling\(dp\)', 'executor.start_polling(dp)', code)
-
+            code = re.sub(r'```', '', code)
             self.logger.info("Применены локальные автоисправления синтаксиса")
             return code
 
-        # Для других ошибок — просто ждём и возвращаем исходный код
+        import time
         time.sleep(5)
         return code
 
