@@ -24,7 +24,7 @@ async def start(message: types.Message):
     await message.reply("Привет, я бот!")
 
 async def help_command(message: types.Message):
-    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level')
+    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox')
 
 async def fight(message: types.Message):
     if message.chat.id not in player_state:
@@ -71,11 +71,22 @@ async def travel(message: types.Message):
             await message.reply('Вы победили зверя!')
         elif action == '2':
             await message.reply('Вы убежали!')
-    elif event == 'Найденная реликвия':
-        relic = random.choice(['Священный Грааль', 'Золотой идол', 'Древний свиток'])
-        await message.reply(f'Вы нашли {relic}!')
-        player_state[message.chat.id]['inventory'].append(relic)
-        await message.reply(f'Ваш инвентарь: {player_state[message.chat.id]["inventory"]}')
+    
+async def paradox(message: types.Message):
+    if message.chat.id not in player_state:
+        await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
+        return
+    paradoxes = ['Вы потеряли 10 здоровья', 'Вы получили 10 здоровья', 'Вы потеряли 100 опыта', 'Вы получили 100 опыта']
+    paradox = random.choice(paradoxes)
+    await message.reply(f'Парадокс времени! {paradox}')
+    if paradox == 'Вы потеряли 10 здоровья':
+        player_state[message.chat.id]['health'] -= 10
+    elif paradox == 'Вы получили 10 здоровья':
+        player_state[message.chat.id]['health'] += 10
+    elif paradox == 'Вы потеряли 100 опыта':
+        player_state[message.chat.id]['experience'] -= 100
+    elif paradox == 'Вы получили 100 опыта':
+        player_state[message.chat.id]['experience'] += 100
 
 async def inventory(message: types.Message):
     if message.chat.id not in player_state:
@@ -93,6 +104,7 @@ dp.register_message_handler(start, commands=['start'])
 dp.register_message_handler(help_command, commands=['help'])
 dp.register_message_handler(fight, commands=['fight'])
 dp.register_message_handler(travel, commands=['travel'])
+dp.register_message_handler(paradox, commands=['paradox'])
 dp.register_message_handler(inventory, commands=['inventory'])
 dp.register_message_handler(level, commands=['level'])
 
