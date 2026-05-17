@@ -16,6 +16,11 @@ class Validator:
             compile(code, "<generated>", "exec")
             return True, None
         except SyntaxError as e:
+            # Выводим проблемную строку
+            lines = code.split("\n")
+            if e.lineno and e.lineno <= len(lines):
+                problem_line = lines[e.lineno - 1]
+                self.logger.warning(f"Проблемная строка {e.lineno}: {problem_line[:100]}")
             return False, f"Синтаксическая ошибка: {e.msg} (строка {e.lineno})"
 
     def validate_imports(self, code):
@@ -91,10 +96,10 @@ class Validator:
         return False, code, "Исчерпаны попытки"
 
     def _llm_fix(self, code, error, fix_type):
-        """Локальное исправление ошибок."""
         import re
 
         if fix_type == "syntax":
+            # Старые замены
             code = re.sub(r'\.reply_text\(', '.reply(', code)
             code = re.sub(r'from aiogram\.types import.*Update,?\s*', '', code)
             code = re.sub(r',\s*Update', '', code)
@@ -103,6 +108,11 @@ class Validator:
             code = re.sub(r'skip_updates\s*=\s*True', '', code)
             code = re.sub(r'executor\.start_polling\(dp,\s*\)', 'executor.start_polling(dp)', code)
             code = re.sub(r'```', '', code)
+
+            # Новые замены
+            code = re.sub(r"commands\s*=\s*\[.*?\]\s*\)", "", code)
+            code = re.sub(r'\){2,}', ')', code)
+
             self.logger.info("Применены локальные автоисправления синтаксиса")
             return code
 
