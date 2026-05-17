@@ -24,7 +24,7 @@ async def start(message: types.Message):
     await message.reply("Привет, я бот!")
 
 async def help_command(message: types.Message):
-    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox')
+    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level')
 
 async def fight(message: types.Message):
     if message.chat.id not in player_state:
@@ -34,7 +34,8 @@ async def fight(message: types.Message):
     enemy_health = 100
     while player_health > 0 and enemy_health > 0:
         await message.reply(f'Ваше здоровье: {player_health}, Здоровье врага: {enemy_health}')
-        action = (await message.reply('Что вы хотите сделать? 1 - атаковать, 2 - защититься')).text
+        await message.reply('Что вы хотите сделать? 1 - атаковать, 2 - защититься')
+        action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
         if action == '1':
             enemy_health -= 20
             player_health -= 10
@@ -66,27 +67,11 @@ async def travel(message: types.Message):
         await message.reply('Вы встретили знаменитую личность!')
     elif event == 'Нападение дикого зверя':
         await message.reply('На вас напал дикой зверь! Что вы делаете? 1 - атаковать, 2 - убежать')
-        action = (await message.reply('Выберите действие:')).text
+        action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
         if action == '1':
             await message.reply('Вы победили зверя!')
         elif action == '2':
             await message.reply('Вы убежали!')
-    
-async def paradox(message: types.Message):
-    if message.chat.id not in player_state:
-        await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
-        return
-    paradoxes = ['Вы потеряли 10 здоровья', 'Вы получили 10 здоровья', 'Вы потеряли 100 опыта', 'Вы получили 100 опыта']
-    paradox = random.choice(paradoxes)
-    await message.reply(f'Парадокс времени! {paradox}')
-    if paradox == 'Вы потеряли 10 здоровья':
-        player_state[message.chat.id]['health'] -= 10
-    elif paradox == 'Вы получили 10 здоровья':
-        player_state[message.chat.id]['health'] += 10
-    elif paradox == 'Вы потеряли 100 опыта':
-        player_state[message.chat.id]['experience'] -= 100
-    elif paradox == 'Вы получили 100 опыта':
-        player_state[message.chat.id]['experience'] += 100
 
 async def inventory(message: types.Message):
     if message.chat.id not in player_state:
@@ -104,7 +89,6 @@ dp.register_message_handler(start, commands=['start'])
 dp.register_message_handler(help_command, commands=['help'])
 dp.register_message_handler(fight, commands=['fight'])
 dp.register_message_handler(travel, commands=['travel'])
-dp.register_message_handler(paradox, commands=['paradox'])
 dp.register_message_handler(inventory, commands=['inventory'])
 dp.register_message_handler(level, commands=['level'])
 
