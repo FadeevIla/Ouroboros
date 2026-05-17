@@ -69,12 +69,12 @@ async def travel(message: types.Message):
         await message.reply('На вас напал дикой зверь! Что вы делаете? 1 - атаковать, 2 - убежать')
         action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
         if action == '1':
-            await message.reply('Вы победили зверя!')
+            player_state[message.chat.id]['health'] -= 20
+            await message.reply(f'Ваше здоровье: {player_state[message.chat.id]["health"]}')
         elif action == '2':
             await message.reply('Вы убежали!')
-    elif event == 'Найденная реликвия':
-        await message.reply('Вы нашли реликвию!')
-        player_state[message.chat.id]['inventory'].append('Реликвия')
+        else:
+            await message.reply('Недопустимое действие')
 
 async def inventory(message: types.Message):
     if message.chat.id not in player_state:
