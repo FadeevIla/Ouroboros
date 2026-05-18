@@ -11,7 +11,7 @@ from datetime import datetime, timedelta
 
 logger = logging.getLogger(__name__)
 BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
-CHAT_ID = 123456789  # замените на ваш chat_id
+CHAT_ID = 123456789  
 
 bot = Bot(token=BOT_TOKEN)
 storage = MemoryStorage()
@@ -23,17 +23,6 @@ async def start(message: types.Message):
     if message.chat.id not in player_state:
         player_state[message.chat.id] = {'health': 100, 'inventory': [], 'level': 1, 'experience': 0, 'paradox': 0}
     await message.reply("Привет, я бот!")
-
-async def report_cmd(message: types.Message):
-    if message.chat.id != CHAT_ID:
-        await message.reply("Эта команда доступна только администратору.")
-        return
-    text = message.text.replace("/report", "").strip()
-    if not text:
-        await message.reply("Напиши: /report твой баг или пожелание")
-        return
-    # add_feedback(text, "admin")
-    await message.reply("Записал! Учту в следующем обновлении.")
 
 async def help_command(message: types.Message):
     await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest, /trade')
@@ -73,62 +62,43 @@ async def travel(message: types.Message):
     epochs = ['Древний Египет', 'Средние века', 'Будущее']
     epoch = random.choice(epochs)
     await message.reply(f'Вы путешествуете в {epoch}!')
-    events = ['Встреча с исторической фигурой', 'Нападение дикого зверя', 'Найденная реликвия']
+    events = ['Встреча с исторической личностью', 'Открытие скрытой реликвии', 'Участие в историческом событии']
     event = random.choice(events)
-    await message.reply(f'Событие: {event}')
+    await message.reply(f'Вы столкнулись с {event}!')
 
 async def inventory(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    inventory = player_state[message.chat.id]['inventory']
-    await message.reply(f'Ваш инвентарь: {", ".join(inventory)}')
+    await message.reply(f'Ваш инвентарь: {player_state[message.chat.id]["inventory"]}')
 
 async def level(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    level = player_state[message.chat.id]['level']
-    await message.reply(f'Ваш уровень: {level}')
+    await message.reply(f'Ваш уровень: {player_state[message.chat.id]["level"]}')
 
 async def paradox(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    paradox = player_state[message.chat.id]['paradox']
-    await message.reply(f'Ваши парадоксы времени: {paradox}')
+    await message.reply(f'Ваша парадоксальная энергия: {player_state[message.chat.id]["paradox"]}')
 
 async def quest(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    quests = ['Исправьте временную аномалию в Древнем Египте', 'Исправьте временную аномалию в Средних веках', 'Исправьте временную аномалию в Будущем']
+    quests = ['Победить врага', 'Собрать реликвию', 'Выполнить историческое задание']
     quest = random.choice(quests)
-    await message.reply(f'Вам дан квест: {quest}')
-    await message.reply('Что вы хотите сделать? 1 - принять квест, 2 - отказаться от квеста')
-    action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
-    if action == '1':
-        if quest == 'Исправьте временную аномалию в Древнем Египте':
-            player_state[message.chat.id]['experience'] += 50
-            await message.reply('Вы исправили временную аномалию в Древнем Египте!')
-        elif quest == 'Исправьте временную аномалию в Средних веках':
-            player_state[message.chat.id]['experience'] += 50
-            await message.reply('Вы исправили временную аномалию в Средних веках!')
-        elif quest == 'Исправьте временную аномалию в Будущем':
-            player_state[message.chat.id]['experience'] += 50
-            await message.reply('Вы исправили временную аномалию в Будущем!')
-    elif action == '2':
-        await message.reply('Вы отказались от квеста!')
+    await message.reply(f'Ваш квест: {quest}')
 
 async def trade(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Вы вступили в торговлю с торговцем реликвиями!')
-    relikts = ['Реликвия Древнего Египта', 'Реликвия Средних веков', 'Реликвия Будущего']
-    relict = random.choice(relikts)
-    await message.reply(f'Торговец предлагает вам {relict} за 100 опыта.')
-    await message.reply('Что вы хотите сделать? 1 - купить реликвию, 2 - отказаться от предложения')
+    relicts = ['Золотой идол', 'Древний свиток', 'Магический кристалл']
+    relict = random.choice(relicts)
+    await message.reply(f'Торговец предлагает вам {relict} за 100 опыта. 1 - купить, 2 - отказаться')
     action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
     if action == '1':
         if player_state[message.chat.id]['experience'] >= 100:
@@ -149,7 +119,6 @@ dp.register_message_handler(level, commands=['level'])
 dp.register_message_handler(paradox, commands=['paradox'])
 dp.register_message_handler(quest, commands=['quest'])
 dp.register_message_handler(trade, commands=['trade'])
-dp.register_message_handler(report_cmd, commands=['report'])
 
 if __name__ == '__main__':
     executor.start_polling(dp)
