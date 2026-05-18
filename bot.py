@@ -26,7 +26,7 @@ async def start(message: types.Message):
     await message.reply("Вы теперь можете путешествовать во времени. Нажмите /travel, чтобы начать свое приключение.")
 
 async def help_command(message: types.Message):
-    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest, /trade, /report')
+    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest, /trade')
 
 async def fight(message: types.Message):
     if message.chat.id not in player_state:
@@ -83,30 +83,31 @@ async def paradox(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply(f'Ваш парадокс: {player_state[message.chat.id]["paradox"]}')
+    await message.reply(f'Ваша парадоксальная энергия: {player_state[message.chat.id]["paradox"]}')
 
 async def quest(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Квестов нет')
+    await message.reply('Вы получили квест: собрать 10 артефактов в Древнем Египте')
+    player_state[message.chat.id]['inventory'].append('Артефакт 1')
+    await message.reply(f'Ваш инвентарь: {player_state[message.chat.id]["inventory"]}')
 
 async def trade(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Торговца реликвий нет')
-
-async def report(message: types.Message):
-    if message.chat.id == CHAT_ID:
-        await message.reply('Введите ваш отчет:')
-        report_text = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
-        # сохранить отчет
-        with open('report.txt', 'a') as f:
-            f.write(report_text + '\n')
-        await message.reply('Ваш отчет принят!')
+    await message.reply('Вы можете обменять 5 артефактов на 1 парадоксальную энергию')
+    action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
+    if action == 'да':
+        if len(player_state[message.chat.id]['inventory']) >= 5:
+            player_state[message.chat.id]['paradox'] += 1
+            player_state[message.chat.id]['inventory'] = player_state[message.chat.id]['inventory'][5:]
+            await message.reply(f'Ваша парадоксальная энергия: {player_state[message.chat.id]["paradox"]}')
+        else:
+            await message.reply('У вас недостаточно артефактов')
     else:
-        await message.reply('Вы не имеете права отправлять отчеты!')
+        await message.reply('Обмен отменен')
 
 dp.register_message_handler(start, commands=['start'])
 dp.register_message_handler(help_command, commands=['help'])
@@ -117,7 +118,6 @@ dp.register_message_handler(level, commands=['level'])
 dp.register_message_handler(paradox, commands=['paradox'])
 dp.register_message_handler(quest, commands=['quest'])
 dp.register_message_handler(trade, commands=['trade'])
-dp.register_message_handler(report, commands=['report'])
 
 if __name__ == '__main__':
     executor.start_polling(dp)
