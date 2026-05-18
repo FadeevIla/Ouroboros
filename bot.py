@@ -23,6 +23,7 @@ async def start(message: types.Message):
     if message.chat.id not in player_state:
         player_state[message.chat.id] = {'health': 100, 'inventory': [], 'level': 1, 'experience': 0, 'paradox': 0}
     await message.reply("Привет, я бот!")
+    await message.reply("Вы теперь можете путешествовать во времени. Нажмите /travel, чтобы начать свое приключение.")
 
 async def help_command(message: types.Message):
     await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest, /trade, /report')
@@ -82,42 +83,19 @@ async def paradox(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    player_state[message.chat.id]['paradox'] += 1
-    await message.reply(f'У вас {player_state[message.chat.id]["paradox"]} парадоксов!')
+    await message.reply(f'Ваш парадокс: {player_state[message.chat.id]["paradox"]}')
 
 async def quest(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    quests = ['Исправление временной аномалии', 'Поиск реликвии']
-    quest = random.choice(quests)
-    await message.reply(f'Вы получили задание: {quest}!')
-    await message.reply('Что вы хотите сделать? 1 - принять задание, 2 - отказаться')
-    action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
-    if action == '1':
-        await message.reply('Вы приняли задание!')
-        player_state[message.chat.id]['experience'] += 100
-    elif action == '2':
-        await message.reply('Вы отказались от задания!')
+    await message.reply('Квестов нет')
 
 async def trade(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    relicts = ['Реликвия 1', 'Реликвия 2', 'Реликвия 3']
-    relict = random.choice(relicts)
-    await message.reply(f'Вам предлагают купить {relict}!')
-    await message.reply('Что вы хотите сделать? 1 - купить, 2 - отказаться')
-    action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
-    if action == '1':
-        if player_state[message.chat.id]['experience'] >= 100:
-            player_state[message.chat.id]['experience'] -= 100
-            player_state[message.chat.id]['inventory'].append(relict)
-            await message.reply(f'Вы купили {relict}!')
-        else:
-            await message.reply('У вас недостаточно опыта для покупки реликвии!')
-    elif action == '2':
-        await message.reply('Вы отказались от предложения!')
+    await message.reply('Торговца реликвий нет')
 
 async def report(message: types.Message):
     if message.chat.id == CHAT_ID:
