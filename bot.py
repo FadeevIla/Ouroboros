@@ -89,17 +89,17 @@ async def quest(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Вы получили квест: собрать 10 артефактов в Древнем Египте')
-    player_state[message.chat.id]['inventory'].append('Артефакт 1')
+    await message.reply('Вы получили квест!')
+    player_state[message.chat.id]['inventory'].append('Квестовый предмет')
     await message.reply(f'Ваш инвентарь: {player_state[message.chat.id]["inventory"]}')
 
 async def trade(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Вы можете обменять 5 артефактов на 1 парадоксальную энергию')
+    await message.reply('Вы можете обменять 5 артефактов на парадоксальную энергию.')
     action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
-    if action == 'да':
+    if action == 'обменять':
         if len(player_state[message.chat.id]['inventory']) >= 5:
             player_state[message.chat.id]['paradox'] += 1
             player_state[message.chat.id]['inventory'] = player_state[message.chat.id]['inventory'][5:]
