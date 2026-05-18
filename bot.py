@@ -25,7 +25,7 @@ async def start(message: types.Message):
     await message.reply("Привет, я бот!")
 
 async def help_command(message: types.Message):
-    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest, /trade')
+    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest, /trade, /report')
 
 async def fight(message: types.Message):
     if message.chat.id not in player_state:
@@ -72,6 +72,17 @@ async def inventory(message: types.Message):
         return
     await message.reply(f'Ваш инвентарь: {player_state[message.chat.id]["inventory"]}')
 
+def add_feedback(chat_id, text):
+    with open('feedback.txt', 'a') as f:
+        f.write(f'{chat_id}: {text}\n')
+
+async def report(message: types.Message):
+    if message.chat.id == CHAT_ID:
+        add_feedback(message.chat.id, message.text[7:])
+        await message.reply('Ваш отзыв был принят!')
+    else:
+        await message.reply('Вы не имеете прав для использования этой команды!')
+
 async def level(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
@@ -82,23 +93,23 @@ async def paradox(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply(f'Ваша парадоксальная энергия: {player_state[message.chat.id]["paradox"]}')
+    await message.reply(f'Ваша парадоксальность: {player_state[message.chat.id]["paradox"]}')
 
 async def quest(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    quests = ['Победить врага', 'Собрать реликвию', 'Выполнить историческое задание']
+    quests = ['Устранить аномалию в древнем Египте', 'Помочь исторической личности в средних веках']
     quest = random.choice(quests)
-    await message.reply(f'Ваш квест: {quest}')
+    await message.reply(f'Вам дано задание: {quest}')
 
 async def trade(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    relicts = ['Золотой идол', 'Древний свиток', 'Магический кристалл']
+    relicts = ['Реликвия из древнего Египта', 'Реликвия из средних веков']
     relict = random.choice(relicts)
-    await message.reply(f'Торговец предлагает вам {relict} за 100 опыта. 1 - купить, 2 - отказаться')
+    await message.reply(f'Торговец предлагает вам {relict} за 100 опыта. Что вы будете делать? 1 - купить, 2 - отказаться')
     action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
     if action == '1':
         if player_state[message.chat.id]['experience'] >= 100:
@@ -119,6 +130,7 @@ dp.register_message_handler(level, commands=['level'])
 dp.register_message_handler(paradox, commands=['paradox'])
 dp.register_message_handler(quest, commands=['quest'])
 dp.register_message_handler(trade, commands=['trade'])
+dp.register_message_handler(report, commands=['report'])
 
 if __name__ == '__main__':
     executor.start_polling(dp)
