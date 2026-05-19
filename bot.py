@@ -26,7 +26,7 @@ async def start(message: types.Message):
     await message.reply("Вы теперь можете путешествовать во времени. Нажмите /travel, чтобы начать свое приключение.")
 
 async def help_command(message: types.Message):
-    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest, /trade, /report')
+    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest, /trade')
 
 async def fight(message: types.Message):
     if message.chat.id not in player_state:
@@ -70,18 +70,13 @@ async def travel(message: types.Message):
         await message.reply('Вы можете поговорить с ней или спросить ее о чем-то.')
         action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
         if action == 'поговорить':
-            await message.reply('Вы поговорили с исторической личностью!')
+            await message.reply('Вы поговорили с исторической личностью и получили 50 опыта.')
+            player_state[message.chat.id]['experience'] += 50
         elif action == 'спросить':
-            await message.reply('Вы спросили историческую личность о чем-то!')
-    elif event == 'Открытие скрытой реликвии':
-        await message.reply('Вы открыли скрытую реликвию!')
-        item = random.choice(['Золотой идол', 'Древний свиток', 'Магический кристалл'])
-        await message.reply(f'Вы нашли {item}!')
-        player_state[message.chat.id]['inventory'].append(item)
-    elif event == 'Участие в историческом событии':
-        await message.reply('Вы участвовали в историческом событии!')
-        outcome = random.choice(['Победа', 'Поражение', 'Нейтральное'])
-        await message.reply(f'Вы получили {outcome}!')
+            await message.reply('Вы спросили историческую личность о чем-то и получили 20 опыта.')
+            player_state[message.chat.id]['experience'] += 20
+        else:
+            await message.reply('Недопустимое действие')
 
 async def inventory(message: types.Message):
     if message.chat.id not in player_state:
@@ -99,32 +94,35 @@ async def paradox(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply(f'Ваша парадоксия: {player_state[message.chat.id]["paradox"]}')
+    await message.reply(f'Ваша парадоксальная энергия: {player_state[message.chat.id]["paradox"]}')
 
 async def quest(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Вы получили квест на исправление временных аномалий!')
-    outcome = random.choice(['Победа', 'Поражение', 'Нейтральное'])
-    await message.reply(f'Вы получили {outcome}!')
+    await message.reply('Вы можете принять квест или отказаться от него.')
+    action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
+    if action == 'принять':
+        await message.reply('Вы приняли квест и получили 100 опыта.')
+        player_state[message.chat.id]['experience'] += 100
+    elif action == 'отказаться':
+        await message.reply('Вы отказались от квеста.')
+    else:
+        await message.reply('Недопустимое действие')
 
 async def trade(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Вы можете торговать реликвиями!')
-    item = random.choice(['Золотой идол', 'Древний свиток', 'Магический кристалл'])
-    await message.reply(f'Вы можете купить {item}!')
-
-async def report(message: types.Message):
-    if message.chat.id != CHAT_ID:
-        await message.reply('Эта команда доступна только для админа.')
-        return
-    await message.reply('Вы можете отправить отчет об ошибке или предложение.')
-    feedback = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
-    # сохранить feedback в базе данных или файл
-    await message.reply('Ваш отчет отправлен.')
+    await message.reply('Вы можете обменять предметы или отказаться от обмена.')
+    action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
+    if action == 'обменять':
+        await message.reply('Вы обменяли предметы и получили 50 опыта.')
+        player_state[message.chat.id]['experience'] += 50
+    elif action == 'отказаться':
+        await message.reply('Вы отказались от обмена.')
+    else:
+        await message.reply('Недопустимое действие')
 
 dp.register_message_handler(start, commands=['start'])
 dp.register_message_handler(help_command, commands=['help'])
@@ -135,7 +133,6 @@ dp.register_message_handler(level, commands=['level'])
 dp.register_message_handler(paradox, commands=['paradox'])
 dp.register_message_handler(quest, commands=['quest'])
 dp.register_message_handler(trade, commands=['trade'])
-dp.register_message_handler(report, commands=['report'])
 
 if __name__ == '__main__':
     executor.start_polling(dp)
