@@ -70,13 +70,18 @@ async def travel(message: types.Message):
         await message.reply('Вы можете поговорить с ней или спросить ее о чем-то.')
         action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
         if action == 'поговорить':
-            await message.reply('Вы поговорили с исторической личностью и получили 50 опыта.')
-            player_state[message.chat.id]['experience'] += 50
+            await message.reply('Вы поговорили с исторической личностью и получили новый предмет.')
+            player_state[message.chat.id]['inventory'].append('Новый предмет')
         elif action == 'спросить':
-            await message.reply('Вы спросили историческую личность о чем-то и получили 20 опыта.')
-            player_state[message.chat.id]['experience'] += 20
+            await message.reply('Вы спросили историческую личность о чем-то и получили новую информацию.')
         else:
             await message.reply('Недопустимое действие')
+    elif event == 'Открытие скрытой реликвии':
+        await message.reply('Вы открыли скрытую реликвию и получили новый предмет.')
+        player_state[message.chat.id]['inventory'].append('Новый предмет')
+    elif event == 'Участие в историческом событии':
+        await message.reply('Вы приняли участие в историческом событии и получили новый опыт.')
+        player_state[message.chat.id]['experience'] += 50
 
 async def inventory(message: types.Message):
     if message.chat.id not in player_state:
@@ -100,10 +105,10 @@ async def quest(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Вы получили квест: собрать 10 единиц ресурсов.')
+    await message.reply('Вы можете принять квест и получить новый опыт.')
     action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
-    if action == 'собрать':
-        await message.reply('Вы собрали 10 единиц ресурсов и получили 100 опыта.')
+    if action == 'принять':
+        await message.reply('Вы приняли квест и получили новый опыт.')
         player_state[message.chat.id]['experience'] += 100
     else:
         await message.reply('Недопустимое действие')
