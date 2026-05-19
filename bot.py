@@ -69,32 +69,27 @@ async def travel(message: types.Message):
     if event == 'Встреча с исторической личностью':
         await message.reply('Вы можете поговорить с ней или спросить ее о чем-то.')
         action = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
-        if action == 'поговорить':
-            await message.reply('Вы узнали много нового и интересного!')
-        elif action == 'спросить':
-            await message.reply('Вы получили ценную информацию!')
+        if action.lower() == 'поговорить':
+            await message.reply('Вы поговорили с исторической личностью и получили интересную информацию.')
+            player_state[message.chat.id]['experience'] += 50
+        elif action.lower() == 'спросить':
+            await message.reply('Вы спросили историческую личность о чем-то интересном и получили ответ.')
+            player_state[message.chat.id]['experience'] += 50
         else:
             await message.reply('Недопустимое действие')
     elif event == 'Открытие скрытой реликвии':
-        relic = random.choice(['Золотой идол', 'Древний свиток', 'Таинственный.hour'])
-        await message.reply(f'Вы нашли {relic}!')
-        player_state[message.chat.id]['inventory'].append(relic)
-        await message.reply('Вы добавили реликвию в свой инвентарь!')
-    elif event == 'Участие в историческом событии':
-        await message.reply('Вы стали частью истории!')
-        player_state[message.chat.id]['experience'] += 50
-        if player_state[message.chat.id]['experience'] >= 1000:
-            player_state[message.chat.id]['level'] += 1
-            player_state[message.chat.id]['experience'] = 0
-            await message.reply(f'Вы повысили уровень до {player_state[message.chat.id]["level"]}')
+        await message.reply('Вы открыли скрытую реликвию и можете взять ее с собой.')
+        player_state[message.chat.id]['inventory'].append('Реликвия из ' + epoch)
+        await message.reply('Ваш инвентарь: ' + ', '.join(player_state[message.chat.id]['inventory']))
+    else:
+        await message.reply('Вы приняли участие в историческом событии и получили интересный опыт.')
+        player_state[message.chat.id]['experience'] += 100
 
 async def inventory(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Ваш инвентарь:')
-    for item in player_state[message.chat.id]['inventory']:
-        await message.reply(item)
+    await message.reply('Ваш инвентарь: ' + ', '.join(player_state[message.chat.id]['inventory']))
 
 async def level(message: types.Message):
     if message.chat.id not in player_state:
@@ -106,48 +101,28 @@ async def paradox(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Вы испытали парадокс времени!')
-    player_state[message.chat.id]['paradox'] += 1
-    if player_state[message.chat.id]['paradox'] >= 5:
-        await message.reply('Вы были возвращены в настоящее!')
-        player_state[message.chat.id] = {'health': 100, 'inventory': [], 'level': 1, 'experience': 0, 'paradox': 0}
+    await message.reply(f'Ваш парадокс: {player_state[message.chat.id]["paradox"]}')
 
 async def quest(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Вы получили квест!')
-    quest_type = random.choice(['Уничтожить врага', 'Найти реликвию', 'Выполнить задание'])
-    await message.reply(quest_type)
-    if quest_type == 'Уничтожить врага':
-        await message.reply('Вы уничтожили врага!')
-        player_state[message.chat.id]['experience'] += 100
-        if player_state[message.chat.id]['experience'] >= 1000:
-            player_state[message.chat.id]['level'] += 1
-            player_state[message.chat.id]['experience'] = 0
-            await message.reply(f'Вы повысили уровень до {player_state[message.chat.id]["level"]}')
-    elif quest_type == 'Найти реликвию':
-        relic = random.choice(['Золотой идол', 'Древний свиток', 'Таинственный.hour'])
-        await message.reply(f'Вы нашли {relic}!')
-        player_state[message.chat.id]['inventory'].append(relic)
-        await message.reply('Вы добавили реликвию в свой инвентарь!')
-    elif quest_type == 'Выполнить задание':
-        await message.reply('Вы выполнили задание!')
-        player_state[message.chat.id]['experience'] += 50
-        if player_state[message.chat.id]['experience'] >= 1000:
-            player_state[message.chat.id]['level'] += 1
-            player_state[message.chat.id]['experience'] = 0
-            await message.reply(f'Вы повысили уровень до {player_state[message.chat.id]["level"]}')
+    await message.reply('Вы получили квест на исправление временных аномалий.')
+    player_state[message.chat.id]['paradox'] += 1
+    await message.reply(f'Ваш парадокс: {player_state[message.chat.id]["paradox"]}')
 
 async def trade(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Вы.Margin торговца!')
-    item = random.choice(['Золотой идол', 'Древний свиток', 'Таинственный.hour'])
-    await message.reply(f'Вы купили {item}!')
-    player_state[message.chat.id]['inventory'].append(item)
-    await message.reply('Вы добавили реликвию в свой инвентарь!')
+    await message.reply('Вы обменяли один из ваших предметов на случайный артефакт.')
+    if player_state[message.chat.id]['inventory']:
+        item = random.choice(player_state[message.chat.id]['inventory'])
+        player_state[message.chat.id]['inventory'].remove(item)
+        player_state[message.chat.id]['inventory'].append('Артефакт из торговли')
+        await message.reply('Ваш инвентарь: ' + ', '.join(player_state[message.chat.id]['inventory']))
+    else:
+        await message.reply('У вас нет предметов для обмена.')
 
 async def report(message: types.Message):
     if message.chat.id != CHAT_ID:
@@ -155,7 +130,6 @@ async def report(message: types.Message):
         return
     await message.reply('Введите ваш отчет:')
     report_text = (await bot.wait_for_message(chat_id=message.chat.id, timeout=60)).text
-    # сохранить отчет
     with open('report.txt', 'a') as f:
         f.write(report_text + '\n')
     await message.reply('Отчет принят!')
