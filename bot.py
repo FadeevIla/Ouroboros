@@ -77,7 +77,9 @@ async def inventory(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply(f'Ваш инвентарь: {player_state[message.chat.id]["inventory"]}')
+    await message.reply('Ваш инвентарь:')
+    for item in player_state[message.chat.id]['inventory']:
+        await message.reply(item)
 
 async def level(message: types.Message):
     if message.chat.id not in player_state:
@@ -89,7 +91,7 @@ async def paradox(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply(f'Ваша парадоксальная энергия: {player_state[message.chat.id]["paradox"]}')
+    await message.reply(f'Ваш парадокс: {player_state[message.chat.id]["paradox"]}')
 
 async def quest(message: types.Message):
     if message.chat.id not in player_state:
