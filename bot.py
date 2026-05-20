@@ -8,7 +8,6 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.utils import executor
 from datetime import datetime, timedelta
-from core import feedback
 
 logger = logging.getLogger(__name__)
 BOT_TOKEN = os.environ['TELEGRAM_BOT_TOKEN']
@@ -27,7 +26,7 @@ async def start(message: types.Message):
     await message.reply("Вы теперь можете путешествовать во времени. Нажмите /travel, чтобы начать свое приключение.")
 
 async def help_command(message: types.Message):
-    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest, /trade, /report')
+    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest, /trade')
 
 async def fight(message: types.Message):
     if message.chat.id not in player_state:
@@ -70,11 +69,11 @@ async def travel(message: types.Message):
     if event == 'Встреча с исторической личностью':
         await message.reply('Вы можете поговорить с ней или спросить ее о чем-то.')
     elif event == 'Открытие скрытой реликвии':
-        relic = random.choice(['Золотой идол', 'Древняя книга', 'Священный булавочный закон'])
-        await message.reply(f'Вы открыли {relic}!')
-        player_state[message.chat.id]['inventory'].append(relic)
-    else:
-        await message.reply('Вы приняли участие в историческом событии!')
+        await message.reply('Вы нашли скрытую реликвию!')
+        player_state[message.chat.id]['inventory'].append('Реликвия')
+    elif event == 'Участие в историческом событии':
+        await message.reply('Вы участвуете в историческом событии!')
+        player_state[message.chat.id]['experience'] += 50
 
 async def inventory(message: types.Message):
     if message.chat.id not in player_state:
@@ -92,26 +91,19 @@ async def paradox(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply(f'Ваш парадокс: {player_state[message.chat.id]["paradox"]}')
+    await message.reply('Вы не можете использовать парадокс еще.')
 
 async def quest(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Вы можете принять квест на исправление временных аномалий.')
+    await message.reply('У вас нет активных квестов.')
 
 async def trade(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
     await message.reply('Вы можете обменять свои предметы на другие.')
-
-async def report(message: types.Message):
-    if message.chat.id != CHAT_ID:
-        await message.reply('Эта команда доступна только администратору.')
-        return
-    feedback.add_feedback(message.text)
-    await message.reply('Ваш отчет принят!')
 
 dp.register_message_handler(start, commands=['start'])
 dp.register_message_handler(help_command, commands=['help'])
@@ -122,7 +114,6 @@ dp.register_message_handler(level, commands=['level'])
 dp.register_message_handler(paradox, commands=['paradox'])
 dp.register_message_handler(quest, commands=['quest'])
 dp.register_message_handler(trade, commands=['trade'])
-dp.register_message_handler(report, commands=['report'])
 
 if __name__ == '__main__':
     executor.start_polling(dp)
