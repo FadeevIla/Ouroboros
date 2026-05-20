@@ -69,11 +69,9 @@ async def travel(message: types.Message):
     if event == 'Встреча с исторической личностью':
         await message.reply('Вы можете поговорить с ней или спросить ее о чем-то.')
     elif event == 'Открытие скрытой реликвии':
-        await message.reply('Вы нашли скрытую реликвию!')
-        player_state[message.chat.id]['inventory'].append('Реликвия')
+        await message.reply('Вы можете взять реликвию или оставить ее.')
     elif event == 'Участие в историческом событии':
-        await message.reply('Вы участвуете в историческом событии!')
-        player_state[message.chat.id]['experience'] += 50
+        await message.reply('Вы можете принять участие в событии или наблюдать за ним.')
 
 async def inventory(message: types.Message):
     if message.chat.id not in player_state:
@@ -91,7 +89,7 @@ async def paradox(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply('Вы не можете использовать парадокс еще.')
+    await message.reply(f'Ваша парадоксальная энергия: {player_state[message.chat.id]["paradox"]}')
 
 async def quest(message: types.Message):
     if message.chat.id not in player_state:
