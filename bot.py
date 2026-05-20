@@ -26,7 +26,7 @@ async def start(message: types.Message):
     await message.reply("Вы теперь можете путешествовать во времени. Нажмите /travel, чтобы начать свое приключение.")
 
 async def help_command(message: types.Message):
-    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest, /trade')
+    await message.reply('Список команд: /start, /help, /fight, /travel, /inventory, /level, /paradox, /quest, /trade, /report')
 
 async def fight(message: types.Message):
     if message.chat.id not in player_state:
@@ -71,7 +71,7 @@ async def travel(message: types.Message):
     elif event == 'Открытие скрытой реликвии':
         await message.reply('Вы можете взять реликвию или оставить ее.')
     elif event == 'Участие в историческом событии':
-        await message.reply('Вы можете принять участие в событии или наблюдать за ним.')
+        await message.reply('Вы можете участвовать в событии или отказаться.')
 
 async def inventory(message: types.Message):
     if message.chat.id not in player_state:
@@ -91,7 +91,7 @@ async def paradox(message: types.Message):
     if message.chat.id not in player_state:
         await message.reply('Вы не начали приключение. Нажмите /start, чтобы начать.')
         return
-    await message.reply(f'Ваш парадокс: {player_state[message.chat.id]["paradox"]}')
+    await message.reply(f'Ваша парадоксальная энергия: {player_state[message.chat.id]["paradox"]}')
 
 async def quest(message: types.Message):
     if message.chat.id not in player_state:
@@ -105,6 +105,13 @@ async def trade(message: types.Message):
         return
     await message.reply('Вы можете обменять свои предметы на другие.')
 
+async def report(message: types.Message):
+    if message.chat.id == CHAT_ID:
+        core.feedback.add_feedback(message.text)
+        await message.reply('Отчет принят!')
+    else:
+        await message.reply('У вас нет доступа к этой команде.')
+
 dp.register_message_handler(start, commands=['start'])
 dp.register_message_handler(help_command, commands=['help'])
 dp.register_message_handler(fight, commands=['fight'])
@@ -114,6 +121,7 @@ dp.register_message_handler(level, commands=['level'])
 dp.register_message_handler(paradox, commands=['paradox'])
 dp.register_message_handler(quest, commands=['quest'])
 dp.register_message_handler(trade, commands=['trade'])
+dp.register_message_handler(report, commands=['report'])
 
 if __name__ == '__main__':
     executor.start_polling(dp)
